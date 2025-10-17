@@ -15,21 +15,8 @@ Create a scalebar object for x- and or y-axis. Scalebar appearance is configured
 
 ## Requirements and installation
 It is recommended to use **MATLAB R2019b** or later.
-The following MathWorks products are required:
-- M
-- A
-- T
-- L
-- A
-- B
 The toolbox can be installed from MATLAB's [Add-On Explorer](https://se.mathworks.com/help/matlab/matlab_env/get-add-ons.html) (recommended). It is also possible to download the MATLAB toolbox from [FileExchange](https://se.mathworks.com/matlabcentral/fileexchange/109114-scalebar-for-images-and-plots) or from the [Releases](https://github.com/ehennestad/scalebar-matlab/releases/latest) page of this repository and install it manually.
 
-Users or developers who clone the repository using git can use [MatBox](https://github.com/ehennestad/MatBox) to quickly install this project's [requirements](./requirements.txt) (if any):
-
-```matlab
-scalebartools.installMatBox() % If MatBox is not installed
-matbox.installRequirements(path/to/toolboxRootDir)
-```
 
 ## Getting started
 
@@ -38,7 +25,7 @@ matbox.installRequirements(path/to/toolboxRootDir)
 ```
 
 ## Contributing
-Please see the [Contributing guidelines](.github/CONTRIBUTING.md) and the [Developer notes](.github/DeveloperNotes.md)
+Please see the [Contributing guidelines](.github/CONTRIBUTING.md)
 
 ## License
 
