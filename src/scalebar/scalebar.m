@@ -52,7 +52,7 @@
 %   [ ] Position + units property?
 %   [ ] Autogenerate code
 
-classdef scalebar < handle % & uiw.mixin.AssignPVPairs
+classdef scalebar < handle
 %SCALEBAR Add scalebar to axes
 
     properties
@@ -108,7 +108,7 @@ classdef scalebar < handle % & uiw.mixin.AssignPVPairs
             'Color', 'Location', 'FontName'};
     end
 
-    methods % Contructor/destructor
+    methods % Constructor/destructor
 
         function obj = scalebar(varargin)
         %SCALEBAR Construct an instance of this class
