@@ -11,7 +11,7 @@ matlab_toolbox:
   author_company:
   toolbox_summary: Scalebar for images and plots
   toolbox_description: Create a scalebar object for x- and or y-axis. Scalebar appearance is configured on creation, through setting of properties, or interactively using a context menu.
-  dependencies:
+  dependencies: MATLAB
 
 # Publishing options
 codecov:
