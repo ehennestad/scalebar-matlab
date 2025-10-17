@@ -126,7 +126,7 @@ classdef scalebar < handle
             obj.assignPVPairs(nvPairs{:})
 
             % Parse nv pairs
-            [nvPairs, varargin] = getnvpairs(varargin{:});
+            [nvPairs, ~] = getnvpairs(varargin{:});
             obj.assignPVPairs(nvPairs{:})
 
             % % Start creating scalebar
@@ -362,7 +362,7 @@ classdef scalebar < handle
             yData = calculateYData(obj) ;
             yLim = obj.hAxes.YLim;
 
-            [xSign, ySign] = configurePositionDirection(obj);
+            [xSign, ySign] = configurePositionDirection(obj); %#ok<ASGLU>
 
             if strcmp(obj.hAxes.YDir, 'reverse')
                 ySign = -ySign;
@@ -593,7 +593,7 @@ classdef scalebar < handle
 
     methods (Access = private) % Internal updating
 
-        function validateAxes(obj, hAxes)
+        function validateAxes(~, hAxes)
             assert(isa(hAxes, 'matlab.graphics.axis.Axes') && isvalid(hAxes), ...
                 'First argument must be a valid axes object')
         end
