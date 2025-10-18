@@ -337,6 +337,7 @@ classdef scalebar < handle
             obj.updateTextPosition()
             obj.updateBackground()
             obj.updateContextMenu('Line Width')
+            obj.updateBackground();
         end
 
         function set.FontName(obj, newValue)
