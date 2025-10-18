@@ -130,6 +130,29 @@
         "purpose": "Horizontal and vertical pixel offsets from the axes corner"
       },
       {
+        "name": "ShowBackground",
+        "kind": "namevalue",
+        "type": ["logical", "scalar"],
+        "purpose": "Show a semi-transparent background behind the scale bar"
+      },
+      {
+        "name": "BackgroundColor",
+        "kind": "namevalue",
+        "purpose": "Color of the scale-bar background"
+      },
+      {
+        "name": "BackgroundAlpha",
+        "kind": "namevalue",
+        "type": ["double", "scalar", ">=0", "<=1"],
+        "purpose": "Opacity of the scale-bar background"
+      },
+      {
+        "name": "BackgroundPadding",
+        "kind": "namevalue",
+        "type": ["double", "scalar", ">=0"],
+        "purpose": "Pixel padding around the scale-bar background"
+      },
+      {
         "name": "Visible",
         "kind": "namevalue",
         "type": ["choices={'on','off'}"],

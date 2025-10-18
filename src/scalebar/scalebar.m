@@ -37,6 +37,10 @@
 %       FontWeight                   - Label font weight: "normal" or "bold".
 %       Margin                       - Two-element pixel offset from the
 %                                      selected axes corner.
+%       ShowBackground               - Show a semi-transparent background.
+%       BackgroundColor              - Background patch color.
+%       BackgroundAlpha              - Background opacity from 0 to 1.
+%       BackgroundPadding            - Pixel padding around the scale bar.
 %       Visible                      - Visibility state: "on" or "off".
 %
 %   Example:
@@ -106,6 +110,20 @@ classdef scalebar < handle
 
         % Margin - Horizontal and vertical pixel offsets from the axes corner.
         Margin = [10, 10]
+
+        % ShowBackground - Whether to show a patch behind the scale bar.
+        ShowBackground (1,1) logical = false
+
+        % BackgroundColor - Color of the background patch.
+        BackgroundColor = [0.5 0.5 0.5]
+
+        % BackgroundAlpha - Opacity of the background patch from 0 to 1.
+        BackgroundAlpha (1,1) double {mustBeFinite, ...
+            mustBeGreaterThanOrEqual(BackgroundAlpha, 0), ...
+            mustBeLessThanOrEqual(BackgroundAlpha, 1)} = 0.3
+
+        % BackgroundPadding - Pixel padding around the line and label.
+        BackgroundPadding (1,1) double {mustBeFinite, mustBeNonnegative} = 3
     end
 
     properties (Dependent)
@@ -119,6 +137,7 @@ classdef scalebar < handle
         hAxes               % Handle for the axes
         hScalebarLine       % Handle for the scale bar's line
         hScalebarText       % Handle for the scale bar's text label
+        hScalebarBackground % Handle for the semi-transparent background patch
         ContextMenu         % Handle for scale bar's context menu
         VisibleState matlab.lang.OnOffSwitchState = 'on'
 
@@ -136,12 +155,14 @@ classdef scalebar < handle
 
     properties (Constant, Hidden)
         STYLE_PROPS = {'FontSize', 'FontWeight', 'LineWidth', ...
-            'Color', 'Location', 'FontName'};
+            'Color', 'Location', 'FontName', 'ShowBackground', ...
+            'BackgroundColor', 'BackgroundAlpha', 'BackgroundPadding'};
         CONFIGURABLE_PROPS = {'Axis', 'ScalebarLength', 'UnitLabel', ...
             'ConversionFactor', 'AutoAdjustScalebarLength', ...
             'AutoScalebarLength', 'Location', 'Color', 'LineWidth', ...
             'TextSpacing', 'FontName', 'FontSize', 'FontWeight', ...
-            'Margin', 'Visible'};
+            'Margin', 'ShowBackground', 'BackgroundColor', ...
+            'BackgroundAlpha', 'BackgroundPadding', 'Visible'};
     end
 
     methods % Constructor/destructor
@@ -198,6 +219,7 @@ classdef scalebar < handle
             % Plot scalebar
             obj.plotScalebar()
             obj.plotTextLabel()
+            obj.plotBackground()
 
             % Create contextmenu
             obj.createContextMenu()
@@ -219,6 +241,9 @@ classdef scalebar < handle
             delete(obj.ContextMenu)
             delete(obj.hScalebarLine)
             delete(obj.hScalebarText)
+            if isgraphics(obj.hScalebarBackground)
+                delete(obj.hScalebarBackground)
+            end
         end
     end
 
@@ -246,6 +271,9 @@ classdef scalebar < handle
             if obj.IsConstructed
                 obj.hScalebarLine.Visible = newValue;
                 obj.hScalebarText.Visible = newValue;
+                if isgraphics(obj.hScalebarBackground)
+                    obj.hScalebarBackground.Visible = newValue;
+                end
             end
         end
         function visible = get.Visible(obj)
@@ -307,6 +335,7 @@ classdef scalebar < handle
             % Only set prop value if above does not fail
             obj.LineWidth = newValue;
             obj.updateTextPosition()
+            obj.updateBackground()
             obj.updateContextMenu('Line Width')
         end
 
@@ -318,6 +347,7 @@ classdef scalebar < handle
             obj.onFontNameChanged(newValue)
             % Only set prop value if above does not fail
             obj.FontName = char(newValue);
+            obj.updateBackground()
         end
 
         function set.FontSize(obj, newValue)
@@ -328,6 +358,7 @@ classdef scalebar < handle
             obj.onFontSizeChanged(newValue)
             % Only set prop value if above does not fail
             obj.FontSize = newValue;
+            obj.updateBackground()
             obj.updateContextMenu('Font Size')
         end
 
@@ -339,6 +370,7 @@ classdef scalebar < handle
              obj.onFontWeightChanged(newValue)
             % Only set prop value if above does not fail
             obj.FontWeight = char(newValue);
+            obj.updateBackground()
         end
 
         function set.Location(obj, newValue)
@@ -367,6 +399,7 @@ classdef scalebar < handle
             end
             obj.TextSpacing = newValue;
             obj.updateTextPosition()
+            obj.updateBackground()
         end
 
         function set.AutoAdjustScalebarLength(obj, newValue)
@@ -385,6 +418,42 @@ classdef scalebar < handle
             end
             obj.AutoScalebarLength = newValue;
             obj.refreshAutoScalebarLength()
+        end
+
+        function set.ShowBackground(obj, newValue)
+            arguments
+                obj (1,1) scalebar
+                newValue (1,1) logical
+            end
+            obj.ShowBackground = newValue;
+            obj.updateBackground()
+            obj.updateContextMenu('Show Background')
+        end
+
+        function set.BackgroundColor(obj, newValue)
+            obj.onBackgroundColorChanged(newValue)
+            obj.BackgroundColor = newValue;
+        end
+
+        function set.BackgroundAlpha(obj, newValue)
+            arguments
+                obj (1,1) scalebar
+                newValue (1,1) double {mustBeFinite, ...
+                    mustBeGreaterThanOrEqual(newValue, 0), ...
+                    mustBeLessThanOrEqual(newValue, 1)}
+            end
+            obj.onBackgroundAlphaChanged(newValue)
+            obj.BackgroundAlpha = newValue;
+            obj.updateContextMenu('Background Opacity')
+        end
+
+        function set.BackgroundPadding(obj, newValue)
+            arguments
+                obj (1,1) scalebar
+                newValue (1,1) double {mustBeFinite, mustBeNonnegative}
+            end
+            obj.BackgroundPadding = newValue;
+            obj.updateBackground()
         end
     end
 
@@ -640,6 +709,69 @@ classdef scalebar < handle
             end
         end
 
+        function plotBackground(obj)
+            if ~obj.ShowBackground
+                if isgraphics(obj.hScalebarBackground)
+                    obj.hScalebarBackground.Visible = 'off';
+                end
+                return
+            end
+
+            [xData, yData] = obj.calculateBackgroundVertices();
+            if ~isgraphics(obj.hScalebarBackground)
+                obj.hScalebarBackground = patch(obj.hAxes, xData, yData, ...
+                    obj.BackgroundColor, EdgeColor='none', ...
+                    FaceAlpha=obj.BackgroundAlpha, ...
+                    Clipping='off', PickableParts='none', ...
+                    Tag='Scalebar Background');
+                uistack(obj.hScalebarBackground, 'bottom')
+            else
+                obj.hScalebarBackground.XData = xData;
+                obj.hScalebarBackground.YData = yData;
+                obj.hScalebarBackground.FaceColor = obj.BackgroundColor;
+                obj.hScalebarBackground.FaceAlpha = obj.BackgroundAlpha;
+                obj.hScalebarBackground.Visible = obj.Visible;
+            end
+        end
+
+        function [xData, yData] = calculateBackgroundVertices(obj)
+            lineXData = obj.hScalebarLine.XData;
+            lineYData = obj.hScalebarLine.YData;
+            textExtent = obj.getTextExtentInDataUnits();
+
+            xRange = range(obj.hAxes.XLim);
+            yRange = range(obj.hAxes.YLim);
+            xPadding = xRange * obj.BackgroundPadding / obj.AxesSizePixels(1);
+            yPadding = yRange * obj.BackgroundPadding / obj.AxesSizePixels(2);
+            xLineHalfWidth = xRange * obj.LineWidth / ...
+                (2 * obj.AxesSizePixels(1));
+            yLineHalfWidth = yRange * obj.LineWidth / ...
+                (2 * obj.AxesSizePixels(2));
+
+            xData = [ ...
+                min([lineXData - xLineHalfWidth, textExtent(1)]) - xPadding, ...
+                max([lineXData + xLineHalfWidth, textExtent(2)]) + xPadding, ...
+                max([lineXData + xLineHalfWidth, textExtent(2)]) + xPadding, ...
+                min([lineXData - xLineHalfWidth, textExtent(1)]) - xPadding];
+            yData = [ ...
+                min([lineYData - yLineHalfWidth, textExtent(3)]) - yPadding, ...
+                min([lineYData - yLineHalfWidth, textExtent(3)]) - yPadding, ...
+                max([lineYData + yLineHalfWidth, textExtent(4)]) + yPadding, ...
+                max([lineYData + yLineHalfWidth, textExtent(4)]) + yPadding];
+        end
+
+        function extent = getTextExtentInDataUnits(obj)
+            originalUnits = obj.hScalebarText.Units;
+            obj.hScalebarText.Units = 'data';
+            textExtent = obj.hScalebarText.Extent;
+            obj.hScalebarText.Units = originalUnits;
+
+            xEnd = textExtent(1) + textExtent(3);
+            yEnd = textExtent(2) + textExtent(4);
+            extent = [min(textExtent(1), xEnd), max(textExtent(1), xEnd), ...
+                min(textExtent(2), yEnd), max(textExtent(2), yEnd)];
+        end
+
         function createContextMenu(obj)
 
             checked = {'off', 'on'};
@@ -682,6 +814,24 @@ classdef scalebar < handle
                 mSubItem.Callback = @(s,e) obj.onSetLocationClicked(locations{i});
             end
 
+            mItem = uimenu(hMenu, 'Text', 'Background', 'Separator', 'on');
+            mSubItem = uimenu(mItem, 'Text', 'Show Background');
+            mSubItem.Checked = checked{obj.ShowBackground + 1};
+            mSubItem.Callback = @(s,e) obj.onToggleBackgroundClicked();
+
+            mSubItem = uimenu(mItem, 'Text', 'Set Background Color...');
+            mSubItem.Callback = @(s,e) obj.onSetBackgroundColorClicked();
+
+            mSubItem = uimenu(mItem, 'Text', 'Background Opacity');
+            for opacity = [20, 40, 60, 80, 100]
+                mSubSubItem = uimenu(mSubItem, ...
+                    'Text', sprintf('%d%%', opacity));
+                alpha = opacity / 100;
+                mSubSubItem.Checked = checked{(abs( ...
+                    obj.BackgroundAlpha-alpha) < 0.01) + 1};
+                mSubSubItem.Callback = @(s,e) obj.onSetBackgroundAlphaClicked(alpha);
+            end
+
             mItem = uimenu(hMenu, 'Text', 'Save Current Style', 'Separator', 'on');
             mItem.Callback = @(s,e) props2prefs(obj);
 
@@ -690,6 +840,9 @@ classdef scalebar < handle
 
             obj.hScalebarText.ContextMenu = hMenu;
             obj.hScalebarLine.ContextMenu = hMenu;
+            if isgraphics(obj.hScalebarBackground)
+                obj.hScalebarBackground.ContextMenu = hMenu;
+            end
 
             obj.ContextMenu = hMenu; % store in property
         end
@@ -715,6 +868,22 @@ classdef scalebar < handle
                     menuItem = findobj(obj.ContextMenu, 'Text', 'Location');
                     menuSubItem = menuItem.Children;
                     isMatched = strcmp({menuSubItem.Text}, obj.Location);
+
+                case 'Show Background'
+                    menuItem = findobj(obj.ContextMenu, 'Text', 'Show Background');
+                    if obj.ShowBackground
+                        menuItem.Checked = 'on';
+                    else
+                        menuItem.Checked = 'off';
+                    end
+                    return
+
+                case 'Background Opacity'
+                    menuItem = findobj(obj.ContextMenu, 'Text', 'Background Opacity');
+                    menuSubItem = menuItem.Children;
+                    isMatched = cellfun(@(text) abs( ...
+                        str2double(text(1:end-1))/100 - obj.BackgroundAlpha) < 0.01, ...
+                        {menuSubItem.Text});
             end
 
             switch propName
@@ -787,6 +956,20 @@ classdef scalebar < handle
             set(obj.hScalebarText, 'FontWeight', newValue)
         end
 
+        function onBackgroundColorChanged(obj, newValue)
+            if ~obj.IsConstructed || ~isgraphics(obj.hScalebarBackground)
+                return
+            end
+            obj.hScalebarBackground.FaceColor = newValue;
+        end
+
+        function onBackgroundAlphaChanged(obj, newValue)
+            if ~obj.IsConstructed || ~isgraphics(obj.hScalebarBackground)
+                return
+            end
+            obj.hScalebarBackground.FaceAlpha = newValue;
+        end
+
         function onAxesLimitsChanged(obj)
             if obj.AutoAdjustScalebarLength
                 obj.autoAdjustScalebarLength()
@@ -805,6 +988,9 @@ classdef scalebar < handle
 
             obj.hScalebarLine.Parent = obj.hAxes;
             obj.hScalebarText.Parent = obj.hAxes;
+            if isgraphics(obj.hScalebarBackground)
+                obj.hScalebarBackground.Parent = obj.hAxes;
+            end
             obj.deleteListeners()
             obj.createListeners()
 
@@ -821,6 +1007,7 @@ classdef scalebar < handle
             if ~obj.IsConstructed; return; end
             textLabel = obj.getTextLabel();
             obj.hScalebarText.String = textLabel;
+            obj.updateBackground()
         end
 
         function updateScalebar(obj)
@@ -851,6 +1038,7 @@ classdef scalebar < handle
 
             obj.updateScalebar()
             obj.plotTextLabel()
+            obj.updateBackground()
 
             % Reset xlim and ylim modes
             obj.hAxes.XLimMode = xLimModePreUpdate;
@@ -862,6 +1050,14 @@ classdef scalebar < handle
 
             txtPos = calculateTextPosition(obj);
             obj.hScalebarText.Position(1:2) = [txtPos.x, txtPos.y];
+            obj.updateBackground()
+        end
+
+        function updateBackground(obj)
+            if ~obj.IsConstructed
+                return
+            end
+            obj.plotBackground()
         end
 
         function refreshAutoScalebarLength(obj)
@@ -977,6 +1173,21 @@ classdef scalebar < handle
                 newLocation (1,1) string {mustBeValidLocation}
             end
             obj.Location = newLocation;
+        end
+
+        function onToggleBackgroundClicked(obj)
+            obj.ShowBackground = ~obj.ShowBackground;
+        end
+
+        function onSetBackgroundColorClicked(obj)
+            color = uisetcolor(obj.BackgroundColor, 'Select background color');
+            if ~isequal(color, 0)
+                obj.BackgroundColor = color;
+            end
+        end
+
+        function onSetBackgroundAlphaClicked(obj, alpha)
+            obj.BackgroundAlpha = alpha;
         end
     end
 end
@@ -1096,7 +1307,8 @@ function nvPairs = prefs2props()
     [~, groupName, ~] = fileparts(mfilename('fullpath'));
     propNames = scalebar.STYLE_PROPS;
     % todo: get from mc...
-    defaultValues = {12, 'normal', 1, 'k', 'southeast', 'Helvetica Neue'};
+    defaultValues = {12, 'normal', 1, 'k', 'southeast', 'Helvetica Neue', ...
+        false, [0.5 0.5 0.5], 0.3, 3};
     prefValues = cell(1, numel(propNames));
 
     for i = 1:numel(propNames)
