@@ -80,8 +80,9 @@ classdef ScalebarTest < matlab.unittest.TestCase
             testCase.verifyNotEqual(hText.Position, initialTextPosition)
 
             hScalebar.Axis = "y";
-            testCase.verifyEqual(range(hLine.XData), 0)
-            testCase.verifyEqual(range(hLine.YData), hScalebar.ScalebarLength)
+            testCase.verifyEqual(testCase.dataRange(hLine.XData), 0)
+            testCase.verifyEqual( ...
+                testCase.dataRange(hLine.YData), hScalebar.ScalebarLength)
             testCase.verifyEqual(hText.Rotation, 90)
         end
 
@@ -107,6 +108,10 @@ classdef ScalebarTest < matlab.unittest.TestCase
         function hScalebar = createScalebar(testCase, varargin)
             hScalebar = scalebar(testCase.Axes, varargin{:});
             testCase.addTeardown(@() delete(hScalebar))
+        end
+
+        function value = dataRange(~, data)
+            value = max(data) - min(data);
         end
     end
 end
