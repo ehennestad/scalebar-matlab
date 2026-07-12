@@ -8,31 +8,109 @@
 [![Run Codespell](https://github.com/ehennestad/scalebar-matlab/actions/workflows/run-codespell.yml/badge.svg)](https://github.com/ehennestad/scalebar-matlab/actions/workflows/run-codespell.yml)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://gitHub.com/ehennestad/scalebar-matlab/graphs/commit-activity)
 
-Scalebar for images and plots
+`scalebar` adds a configurable horizontal or vertical scale bar to an axes. It is intended for image data and plots whose axes have meaningful spatial units. The scale bar updates when the axes limits or size change, and can be configured through properties or its context menu.
 
-## Description
+## Requirements
 
-Create a scalebar object for x- and or y-axis. Scalebar appearance is configured on creation, through setting of properties, or interactively using a context menu.
+MATLAB R2019b or later.
 
-## Requirements and installation
-It is recommended to use **MATLAB R2019b** or later.
-The toolbox can be installed from MATLAB's [Add-On Explorer](https://se.mathworks.com/help/matlab/matlab_env/get-add-ons.html) (recommended). It is also possible to download the MATLAB toolbox from [FileExchange](https://se.mathworks.com/matlabcentral/fileexchange/109114-scalebar-for-images-and-plots) or from the [Releases](https://github.com/ehennestad/scalebar-matlab/releases/latest) page of this repository and install it manually.
+## Installation
 
+The recommended installation route is through MATLAB File Exchange:
 
-## Getting started
+1. Open the [scalebar File Exchange page](https://se.mathworks.com/matlabcentral/fileexchange/109114-scalebar-for-images-and-plots).
+2. Select **Download** and then **Install** in MATLAB. This installs the toolbox as an add-on and manages the MATLAB path for you.
+
+You can also search for **scalebar** in MATLAB's Add-On Explorer. For manual installation, download a `.mltbx` file from the [latest release](https://github.com/ehennestad/scalebar-matlab/releases/latest) and open it in MATLAB.
+
+## Quick start
+
+Create an image and add a scale bar in the lower-right corner:
 
 ```matlab
-< add some code examples here >
+imageData = peaks(256);
+
+figure
+imagesc(imageData)
+axis image off
+colormap parula
+
+scalebar('x', 50, 'pixels', ...
+    'Location', 'southeast', ...
+    'Color', 'w', ...
+    'LineWidth', 2);
 ```
 
+The MATLAB sample image can be used in the same way:
+
+```matlab
+imageData = imread('cameraman.tif');
+
+figure
+imagesc(imageData)
+axis image off
+colormap gray
+
+scalebar('x', 50, 'pixels', ...
+    'Location', 'southeast', ...
+    'Color', 'w', ...
+    'LineWidth', 2);
+```
+
+For calibrated image data, specify the physical scale-bar length and the number of data units per physical unit:
+
+```matlab
+pixelsPerMicrometer = 2;
+
+scalebar('x', 25, 'um', ...
+    'ConversionFactor', pixelsPerMicrometer, ...
+    'Location', 'southeastoutside', ...
+    'Color', 'w');
+```
+
+## Constructor
+
+```matlab
+hScalebar = scalebar()
+hScalebar = scalebar(axis, scalebarLength, unitLabel, Name, Value)
+hScalebar = scalebar(hAxes, axis, scalebarLength, unitLabel, Name, Value)
+```
+
+- `hAxes` is the target axes. If omitted, the current axes is used.
+- `axis` is `'x'` or `'y'`; the default is `'x'`.
+- `scalebarLength` is the physical length to display. If omitted, an appropriate length is calculated from the axes limits.
+- `unitLabel` is the text appended to the displayed length. Use `'um'` for a micrometre label.
+
+The constructor accepts character vectors and string scalars. It returns a handle object, so appearance can be changed after creation:
+
+```matlab
+hScalebar = scalebar('x', 10, 'mm');
+hScalebar.Color = 'w';
+hScalebar.Location = "northwest";
+```
+
+### Name-value options
+
+| Option | Description |
+| --- | --- |
+| `ConversionFactor` | Number of data units per scale-bar unit. For example, use `2` when two pixels represent one micrometre. |
+| `Location` | One of `northeast`, `northwest`, `southeast`, or `southwest`, optionally suffixed with `outside`. |
+| `Color`, `LineWidth` | Line and text appearance. |
+| `FontName`, `FontSize`, `FontWeight` | Text appearance. |
+| `Margin`, `TextSpacing` | Pixel offsets from the axes corner and scale bar. |
+| `AutoAdjustScalebarLength`, `AutoScalebarLength` | Automatically select a scale-bar length as a percentage of the relevant axes range. |
+| `Visible` | Show or hide the scale bar using `'on'` or `'off'`. |
+
+Right-click a scale bar to change its color, line width, font, location, and automatic-length setting interactively.
+
 ## Contributing
-Please see the [Contributing guidelines](.github/CONTRIBUTING.md)
+
+See the [contributing guidelines](.github/CONTRIBUTING.md).
 
 ## License
 
-This project is available under the None License. See the LICENSE file for details.
+A license has not yet been selected for this project.
 
 ## Author
 
-Eivind Hennestad (None)
-None
+Eivind Hennestad
