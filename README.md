@@ -3,6 +3,7 @@
 [![Version Number](https://img.shields.io/github/v/release/ehennestad/scalebar-matlab?label=version)](https://github.com/ehennestad/scalebar-matlab/releases/latest)
 [![View scalebar on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://se.mathworks.com/matlabcentral/fileexchange/109114-scalebar-for-images-and-plots)
 [![MATLAB Tests](.github/badges/tests.svg)](https://github.com/ehennestad/scalebar-matlab/actions/workflows/test-code.yml)
+[![codecov](https://codecov.io/gh/ehennestad/scalebar-matlab/graph/badge.svg?token=ODXEKDNYFG)](https://codecov.io/gh/ehennestad/scalebar-matlab)
 [![MATLAB Code Issues](.github/badges/code_issues.svg)](https://github.com/ehennestad/scalebar-matlab/security/code-scanning)
 [![Run Codespell](https://github.com/ehennestad/scalebar-matlab/actions/workflows/run-codespell.yml/badge.svg)](https://github.com/ehennestad/scalebar-matlab/actions/workflows/run-codespell.yml)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://gitHub.com/ehennestad/scalebar-matlab/graphs/commit-activity)
