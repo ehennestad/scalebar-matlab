@@ -8,7 +8,7 @@ classdef ScalebarTest < matlab.unittest.TestCase
 
     methods (TestMethodSetup)
         function createAxes(testCase)
-            repositoryRoot = fileparts(fileparts(fileparts(mfilename('fullpath'))));
+            repositoryRoot = fileparts(fileparts(mfilename('fullpath')));
             addpath(fullfile(repositoryRoot, 'src', 'scalebar'))
 
             testCase.Figure = figure('Visible', 'off');

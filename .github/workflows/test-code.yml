@@ -29,9 +29,11 @@ jobs:
       # on the contents of the specified folder (and subfolders)
       source_directory: src
       
-      # Path to directory with (CI) tools or tests. Used for finding unit tests
-      # and running customized MatBox tasks
+      # Path to directory with CI tools and customized MatBox tasks
       tools_directory: tools
+
+      # Path to directory containing MATLAB unit tests
+      tests_directory: tests
 
       # Name of MATLAB Release to use for running test suites and code analysis
       matlab_release: latest
