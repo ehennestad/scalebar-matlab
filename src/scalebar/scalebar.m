@@ -90,6 +90,7 @@ classdef scalebar < handle
         hScalebarLine       % Handle for the scalebar's line
         hScalebarText       % Handle for the scalebar's text label
         ContextMenu         % Handle for scalebar's contextmenu
+        VisibleState matlab.lang.OnOffSwitchState = 'on'
 
         IsConstructed = false
 
@@ -106,6 +107,11 @@ classdef scalebar < handle
     properties (Constant, Hidden)
         STYLE_PROPS = {'FontSize', 'FontWeight', 'LineWidth', ...
             'Color', 'Location', 'FontName'};
+        CONFIGURABLE_PROPS = {'Axis', 'ScalebarLength', 'UnitLabel', ...
+            'ConversionFactor', 'AutoAdjustScalebarLength', ...
+            'AutoScalebarLength', 'Location', 'Color', 'LineWidth', ...
+            'TextSpacing', 'FontName', 'FontSize', 'FontWeight', ...
+            'Margin', 'Visible'};
     end
 
     methods % Constructor/destructor
@@ -118,15 +124,22 @@ classdef scalebar < handle
         %   hScalebar = scalebar(axis) creates a scalebar on the specified
         %   axis. Axis can be 'x' or 'y'. Default is 'x'.
 
-            % Check for axes
-            varargin = obj.checkArgs(varargin);
+            arguments (Repeating)
+                varargin
+            end
+
+            [hParent, positionalPairs, nvPairs] = parseConstructorInputs(varargin{:});
+            obj.Parent = hParent;
+
+            % Apply positional values before style preferences. This keeps the
+            % historical positional constructor forms while validating every
+            % value through its property setter.
+            obj.assignPVPairs(positionalPairs{:})
 
             % Set default style properties from preferences
-            nvPairs = prefs2props();
-            obj.assignPVPairs(nvPairs{:})
+            preferencePairs = prefs2props();
+            obj.assignPVPairs(preferencePairs{:})
 
-            % Parse nv pairs
-            [nvPairs, ~] = getnvpairs(varargin{:});
             obj.assignPVPairs(nvPairs{:})
 
             % % Start creating scalebar
@@ -151,6 +164,8 @@ classdef scalebar < handle
             obj.createListeners()
 
             obj.IsConstructed = true;
+            obj.refreshAutoScalebarLength()
+            obj.Visible = obj.VisibleState;
 
             if ~isHoldOn
                 hold(obj.hAxes, 'off')
@@ -169,6 +184,10 @@ classdef scalebar < handle
 
     methods % Set/get
         function set.Parent(obj, newValue)
+            arguments
+                obj (1,1) scalebar
+                newValue (1,1) matlab.graphics.axis.Axes
+            end
             obj.validateAxes(newValue)
             obj.hAxes = newValue;
 
@@ -179,17 +198,27 @@ classdef scalebar < handle
         end
 
         function set.Visible(obj, newValue)
+            arguments
+                obj (1,1) scalebar
+                newValue (1,1) matlab.lang.OnOffSwitchState
+            end
+            obj.VisibleState = newValue;
             if obj.IsConstructed
                 obj.hScalebarLine.Visible = newValue;
                 obj.hScalebarText.Visible = newValue;
             end
         end
         function visible = get.Visible(obj)
-            if obj.IsConstructed
-                visible = obj.hScalebarLine.Visible;
-            else
-                visible = 'off';
+            visible = obj.VisibleState;
+        end
+
+        function set.Axis(obj, newValue)
+            arguments
+                obj (1,1) scalebar
+                newValue (1,1) string {mustBeMember(newValue, ["x", "y"])}
             end
+            obj.Axis = char(newValue);
+            obj.updatePosition()
         end
 
         function set.Color(obj, newColor)
@@ -199,12 +228,19 @@ classdef scalebar < handle
         end
 
         function set.UnitLabel(obj, newValue)
-            assert(ischar(newValue), 'Value must be a character vector')
-            obj.UnitLabel = newValue;
+            arguments
+                obj (1,1) scalebar
+                newValue (1,1) string
+            end
+            obj.UnitLabel = char(newValue);
             obj.updateTextLabel()
         end
 
         function set.ConversionFactor(obj, newValue)
+            arguments
+                obj (1,1) scalebar
+                newValue (1,1) double {mustBeFinite, mustBePositive}
+            end
             obj.ConversionFactor = newValue;
             obj.updateScalebar()
             % obj.updateTextLabel()
@@ -212,6 +248,10 @@ classdef scalebar < handle
         end
 
         function set.ScalebarLength(obj, newValue)
+            arguments
+                obj (1,1) scalebar
+                newValue (1,1) double {mustBeValidScalebarLength}
+            end
             obj.ScalebarLength = newValue;
             % obj.updateScalebar()
             obj.updateTextLabel()
@@ -219,6 +259,10 @@ classdef scalebar < handle
         end
 
         function set.LineWidth(obj, newValue)
+            arguments
+                obj (1,1) scalebar
+                newValue (1,1) double {mustBeFinite, mustBePositive}
+            end
             obj.onLinewidthChanged(newValue)
             % Only set prop value if above does not fail
             obj.LineWidth = newValue;
@@ -227,12 +271,20 @@ classdef scalebar < handle
         end
 
         function set.FontName(obj, newValue)
+            arguments
+                obj (1,1) scalebar
+                newValue (1,1) string {mustBeNonzeroLengthText}
+            end
             obj.onFontNameChanged(newValue)
             % Only set prop value if above does not fail
-            obj.FontName = newValue;
+            obj.FontName = char(newValue);
         end
 
         function set.FontSize(obj, newValue)
+            arguments
+                obj (1,1) scalebar
+                newValue (1,1) double {mustBeFinite, mustBePositive}
+            end
             obj.onFontSizeChanged(newValue)
             % Only set prop value if above does not fail
             obj.FontSize = newValue;
@@ -240,20 +292,59 @@ classdef scalebar < handle
         end
 
         function set.FontWeight(obj, newValue)
+            arguments
+                obj (1,1) scalebar
+                newValue (1,1) string {mustBeMember(newValue, ["normal", "bold"])}
+            end
              obj.onFontWeightChanged(newValue)
             % Only set prop value if above does not fail
-            obj.FontWeight = newValue;
+            obj.FontWeight = char(newValue);
         end
 
         function set.Location(obj, newValue)
-            obj.Location = newValue;
+            arguments
+                obj (1,1) scalebar
+                newValue (1,1) string {mustBeValidLocation}
+            end
+            obj.Location = char(newValue);
             obj.updatePosition()
             obj.updateContextMenu('Location')
         end
 
         function set.Margin(obj, newValue)
+            arguments
+                obj (1,1) scalebar
+                newValue (1,2) double {mustBeFinite, mustBeNonnegative}
+            end
             obj.Margin = newValue;
             obj.updatePosition()
+        end
+
+        function set.TextSpacing(obj, newValue)
+            arguments
+                obj (1,1) scalebar
+                newValue (1,1) double {mustBeFinite, mustBeNonnegative}
+            end
+            obj.TextSpacing = newValue;
+            obj.updateTextPosition()
+        end
+
+        function set.AutoAdjustScalebarLength(obj, newValue)
+            arguments
+                obj (1,1) scalebar
+                newValue (1,1) logical
+            end
+            obj.AutoAdjustScalebarLength = newValue;
+            obj.refreshAutoScalebarLength()
+        end
+
+        function set.AutoScalebarLength(obj, newValue)
+            arguments
+                obj (1,1) scalebar
+                newValue (1,1) double {mustBeFinite, mustBePositive}
+            end
+            obj.AutoScalebarLength = newValue;
+            obj.refreshAutoScalebarLength()
         end
     end
 
@@ -324,9 +415,14 @@ classdef scalebar < handle
 
             offsetDu = xLimRange * obj.MarginNorm(1) * xSign;
 
-            if contains(obj.Location, 'east')
+            isEast = contains(obj.Location, 'east');
+            if strcmp(obj.hAxes.XDir, 'reverse')
+                isEast = ~isEast;
+            end
+
+            if isEast
                 xData = xLim(2) - offsetDu - [obj.ScalebarLengthDu(1), 0];
-            elseif contains(obj.Location, 'west')
+            else
                 xData = xLim(1) + offsetDu + [0, obj.ScalebarLengthDu(1)];
             end
 
@@ -469,7 +565,8 @@ classdef scalebar < handle
             if isempty(obj.hScalebarText)
                 obj.hScalebarText = text(obj.hAxes, txtPos.x, txtPos.y, ...
                     textLabel, 'Color', obj.Color, 'FontSize', ...
-                    obj.FontSize, 'FontWeight', obj.FontWeight);
+                    obj.FontSize, 'FontWeight', obj.FontWeight, ...
+                    'FontName', obj.FontName);
                 % obj.hScalebarText.HandleVisibility = 'off';
                 obj.hScalebarText.Tag = 'Scalebar Text';
             else
@@ -481,6 +578,8 @@ classdef scalebar < handle
 
             if strcmp(obj.Axis, 'y')
                 obj.hScalebarText.Rotation = 90;
+            else
+                obj.hScalebarText.Rotation = 0;
             end
         end
 
@@ -598,51 +697,9 @@ classdef scalebar < handle
                 'First argument must be a valid axes object')
         end
 
-        function args = checkArgs(obj, args)
-
-            % Check if first argument is an axes object.
-            if numel(args) >= 1 && isa(args{1}, 'matlab.graphics.axis.Axes')
-                obj.hAxes = args{1};
-                args(1) = [];
-            end
-
-            % If axes was not assigned, get the current axes.
-            if isempty(obj.hAxes)
-                obj.hAxes = gca;
-            end
-
-            % Check if first argument is axis
-            if numel(args) >= 1 && ischar(args{1}) && ...
-                    any( strcmp({'x', 'y'}, args{1}) )
-                obj.Axis = args{1};
-                args(1) = [];
-            end
-
-            % Check if second argument is length of scalebar
-            if numel(args) >= 1 && isnumeric(args{1})
-                obj.ScalebarLength = args{1};
-                args(1) = [];
-            end
-
-            % Check if third argument is name of scalebar units
-            if numel(args) >= 1 && ischar(args{1})
-                if ~isprop(obj, args{1})
-                    obj.UnitLabel = args{1};
-                    args(1) = [];
-                end
-            end
-        end
-
         function assignPVPairs(obj, varargin)
-
-            names = varargin(1:2:end);
-            for i = 1:numel(names)
-                thisName = names{i};
-                if isprop(obj, thisName)
-                    obj.(thisName) = varargin{i*2};
-                else
-                    warning('Could not set the parameter "%s" for %s', thisName, class(obj))
-                end
+            for i = 1:2:numel(varargin)
+                obj.(varargin{i}) = varargin{i+1};
             end
         end
 
@@ -750,6 +807,12 @@ classdef scalebar < handle
             obj.hScalebarText.Position(1:2) = [txtPos.x, txtPos.y];
         end
 
+        function refreshAutoScalebarLength(obj)
+            if obj.AutoAdjustScalebarLength && obj.IsConstructed
+                obj.autoAdjustScalebarLength()
+            end
+        end
+
         function autoAdjustScalebarLength(obj)
 
             switch obj.Axis
@@ -800,6 +863,10 @@ classdef scalebar < handle
         end
 
         function setAutoadjustScalebar(obj, src)
+            arguments
+                obj (1,1) scalebar
+                src (1,1) matlab.ui.container.Menu
+            end
 
             if src.Checked
                 obj.AutoAdjustScalebarLength = false;
@@ -812,10 +879,18 @@ classdef scalebar < handle
         end
 
         function setLineWidth(obj, lineWidth)
+            arguments
+                obj (1,1) scalebar
+                lineWidth (1,1) double {mustBeFinite, mustBePositive}
+            end
             obj.LineWidth = lineWidth;
         end
 
         function setFontSize(obj, fontSize)
+            arguments
+                obj (1,1) scalebar
+                fontSize (1,1) double {mustBeFinite, mustBePositive}
+            end
             obj.FontSize = fontSize;
         end
 
@@ -841,6 +916,10 @@ classdef scalebar < handle
         end
 
         function setLocation(obj, newLocation)
+            arguments
+                obj (1,1) scalebar
+                newLocation (1,1) string {mustBeValidLocation}
+            end
             obj.Location = newLocation;
         end
     end
@@ -856,28 +935,103 @@ classdef scalebar < handle
     end
 end
 
-function [nvPairs, varargin] = getnvpairs(varargin)
-%getnvpairs Get name value pairs from a list of input arguments
-%
-%   [nvPairs, varargin] = getnvpairs(varargin)
+function [hParent, positionalPairs, nvPairs] = parseConstructorInputs(varargin)
+%parseConstructorInputs Normalize legacy positional inputs and name-value pairs.
 
-    if numel(varargin)==1 && iscell(varargin{1})
-        % Assume varargin is passed on directly and need to be unpacked
-        varargin = varargin{1};
+    args = varargin;
+    positionalPairs = {};
+    nvPairs = cell(1, numel(args));
+    numNVPairs = 0;
+    hasPositionalParent = false;
+
+    if ~isempty(args) && isa(args{1}, 'matlab.graphics.axis.Axes')
+        hParent = args{1};
+        hasPositionalParent = true;
+        args(1) = [];
+    else
+        hParent = gca;
     end
 
-    nvPairs = {};
+    if ~isempty(args) && isTextScalar(args{1}) && ...
+            any(strcmp(string(args{1}), ["x", "y"]))
+        positionalPairs = [positionalPairs, {'Axis', args{1}}];
+        args(1) = [];
+    end
 
-    for i = numel(varargin) : -2 : 1
+    if ~isempty(args) && isnumeric(args{1})
+        positionalPairs = [positionalPairs, {'ScalebarLength', args{1}}];
+        args(1) = [];
+    end
 
-        if i == 1; break; end
+    if ~isempty(args) && isTextScalar(args{1}) && ...
+            ~isConfigurablePropertyName(args{1}) && ~strcmp(string(args{1}), "Parent")
+        positionalPairs = [positionalPairs, {'UnitLabel', args{1}}];
+        args(1) = [];
+    end
 
-        if ischar( varargin{i-1} )
-            nvPairs = [nvPairs, varargin(i-1:i)]; %#ok<AGROW>
-            varargin(i-1:i) = [];
-        else
-            break
+    if isempty(args)
+        nvPairs = {};
+        return
+    end
+
+    if mod(numel(args), 2) ~= 0
+        error('scalebar:InvalidConstructorInput', ...
+            'Expected positional inputs followed by complete name-value pairs.')
+    end
+
+    for i = 1:2:numel(args)
+        name = args{i};
+        value = args{i+1};
+        if ~isTextScalar(name)
+            error('scalebar:InvalidOptionName', ...
+                'Name-value option names must be character vectors or string scalars.')
         end
+
+        name = char(string(name));
+        if strcmp(name, 'Parent')
+            if hasPositionalParent
+                error('scalebar:DuplicateParent', ...
+                    'Specify the parent axes either positionally or as Parent, not both.')
+            end
+            hParent = value;
+            hasPositionalParent = true;
+        elseif isConfigurablePropertyName(name)
+            numNVPairs = numNVPairs + 2;
+            nvPairs(numNVPairs-1:numNVPairs) = {name, value};
+        else
+            error('scalebar:UnknownOption', ...
+                'Unknown scalebar option "%s".', name)
+        end
+    end
+
+    nvPairs = nvPairs(1:numNVPairs);
+end
+
+function tf = isTextScalar(value)
+    tf = (ischar(value) && isrow(value)) || (isstring(value) && isscalar(value));
+end
+
+function tf = isConfigurablePropertyName(name)
+    tf = any(strcmp(char(string(name)), scalebar.CONFIGURABLE_PROPS));
+end
+
+function locations = validLocations()
+    locations = ["northeast", "northwest", "southeast", "southwest", ...
+        "northeastoutside", "northwestoutside", "southeastoutside", ...
+        "southwestoutside"];
+end
+
+function mustBeValidLocation(value)
+    if ~any(value == validLocations())
+        error('scalebar:InvalidLocation', ...
+            'Location must be a supported axes corner, optionally suffixed with outside.')
+    end
+end
+
+function mustBeValidScalebarLength(value)
+    if ~(isnan(value) || (isfinite(value) && value > 0))
+        error('scalebar:InvalidScalebarLength', ...
+            'ScalebarLength must be a positive finite scalar or NaN for automatic sizing.')
     end
 end
 
