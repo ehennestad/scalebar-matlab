@@ -10,6 +10,45 @@
 
 `scalebar` adds configurable horizontal and vertical scale bars to MATLAB axes. It is intended for calibrated images and plots whose axes have meaningful units. Scale bars update when axes limits or size change, and can be configured through properties or their context menu.
 
+## Examples
+
+### Calibrated image
+
+The [complete image example](src/examples/createImageExample.m) creates the
+following pseudocoloured microscopy image and adds a 25 µm scale bar. From the
+repository root, run it with:
+
+```matlab
+addpath("src/examples")
+createImageExample
+```
+
+<p align="center">
+  <img src="docs/images/scalebar-image-example.png" width="500" alt="Pseudocoloured microscopy image with a 25 µm scale bar">
+</p>
+
+### Plot data
+
+The [complete plot example](src/examples/createPlotExample.m) simulates a
+membrane-potential trace and adds horizontal and vertical scale bars. From the
+repository root, run it with:
+
+```matlab
+addpath("src/examples")
+createPlotExample
+```
+
+![Membrane-potential trace with 500 ms and 50 mV scale bars](docs/images/scalebar-plot-example.png)
+
+To regenerate the README images after changing either example, run
+[`generateReadmeImages`](tools/generateReadmeImages.m) from the repository
+root:
+
+```matlab
+addpath("tools")
+generateReadmeImages
+```
+
 ## Requirements
 
 MATLAB R2019b or later.
@@ -41,43 +80,6 @@ scalebar(50, "pixels", ...
     Location="southeast", ...
     Color="w", ...
     LineWidth=2)
-```
-
-## Examples
-
-### Calibrated image
-
-The [complete image example](src/examples/createImageExample.m) creates the
-following pseudocoloured microscopy image and adds a 25 µm scale bar. From the
-repository root, run it with:
-
-```matlab
-addpath("src/examples")
-createImageExample
-```
-
-![Pseudocoloured microscopy image with a 25 µm scale bar](docs/images/scalebar-image-example.png)
-
-### Plot data
-
-The [complete plot example](src/examples/createPlotExample.m) simulates a
-membrane-potential trace and adds horizontal and vertical scale bars. From the
-repository root, run it with:
-
-```matlab
-addpath("src/examples")
-createPlotExample
-```
-
-![Membrane-potential trace with 500 ms and 50 mV scale bars](docs/images/scalebar-plot-example.png)
-
-To regenerate the README images after changing either example, run
-[`generateReadmeImages`](tools/generateReadmeImages.m) from the repository
-root:
-
-```matlab
-addpath("tools")
-generateReadmeImages
 ```
 
 ## Usage
