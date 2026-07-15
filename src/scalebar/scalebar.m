@@ -50,29 +50,30 @@
 
 % Todo:
 %   [ ] Position + units property?
-%   [ ] Autogenerate code
+%   [ ] Autogenerate code - given some settings, create snippet for
+%       recreating scalebar
 
 classdef scalebar < handle
 %SCALEBAR Add scalebar to axes
 
     properties
-        Axis = 'x'            % Axis to place scalebar ('x' or 'y')
-        ScalebarLength = nan  % Length of scalebar in "physical" units
-        UnitLabel = ''        % Unit label, ie 'um'
+        Axis (1,:) char {mustBeMember(Axis, {'x', 'y'})} = 'x' % Axis to place scalebar ('x' or 'y')
+        ScalebarLength (1,1) double = nan  % Length of scalebar in "physical" units
+        UnitLabel (1,1) string = ""        % Unit label, ie 'um'
 
-        ConversionFactor = 1 % Unit conversion if axes limits are in different units
+        ConversionFactor (1,1) double = 1 % Unit conversion if axes limits are in different units
                        % than the units of the plot or image. E.g if 1mm in an
                        % image is 150 pixels, ConversionFactor should be 150.
                        % conversionFactor = data unit per scalebar unit
 
-        AutoAdjustScalebarLength = false;
-        AutoScalebarLength = 20; % In percentage of axes size...
+        AutoAdjustScalebarLength (1,1) logical = false;
+        AutoScalebarLength (1,1) double = 20; % In percentage of axes size...
 
         Location = 'southeastoutside'  % northwest, southeast, southwestoutside etc
         Color = 'k'             % Color specification for line and text
-        LineWidth = 1           % Width of scalebar
+        LineWidth (1,1) double {mustBeNonnegative} = 1 % Width of scalebar
 
-        TextSpacing = 2;        % Spacing (offset) between scalebar line and text in pixels
+        TextSpacing (1,1) double {mustBeNonnegative} = 2;        % Spacing (offset) between scalebar line and text in pixels
         FontName = 'Helvetica Neue';
         FontSize = 10;          % Fontsize of scalebar text
         FontWeight = 'normal'   % Fontweight of scalebar text
@@ -100,8 +101,8 @@ classdef scalebar < handle
     end
 
     properties (Access = private)
-        SizeChangedListener
-        LimitsChangedListener
+        SizeChangedListener event.listener
+        LimitsChangedListener event.listener
     end
 
     properties (Constant, Hidden)
