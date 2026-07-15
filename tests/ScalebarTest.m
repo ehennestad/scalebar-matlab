@@ -209,12 +209,12 @@ classdef ScalebarTest < matlab.unittest.TestCase
             testCase.verifyEqual(hScalebar.ScalebarLength, 4)
         end
 
-        function testPublicStyleMethods(testCase)
+        function testPublicStyleProperties(testCase)
             hScalebar = testCase.createScalebar("x", 2, "mm");
 
-            hScalebar.setLineWidth(3)
-            hScalebar.setFontSize(14)
-            hScalebar.setLocation("northwest")
+            hScalebar.LineWidth = 3;
+            hScalebar.FontSize = 14;
+            hScalebar.Location = "northwest";
 
             testCase.verifyEqual(hScalebar.LineWidth, 3)
             testCase.verifyEqual(hScalebar.FontSize, 14)
@@ -227,11 +227,11 @@ classdef ScalebarTest < matlab.unittest.TestCase
             hMenuItem = findobj( ...
                 hText.ContextMenu, 'Text', 'Autoadjust Scalebar');
 
-            hScalebar.setAutoadjustScalebar(hMenuItem)
+            hMenuItem.Callback(hMenuItem, [])
             testCase.verifyTrue(hScalebar.AutoAdjustScalebarLength)
             testCase.verifyEqual(hMenuItem.Checked, matlab.lang.OnOffSwitchState.on)
 
-            hScalebar.setAutoadjustScalebar(hMenuItem)
+            hMenuItem.Callback(hMenuItem, [])
             testCase.verifyFalse(hScalebar.AutoAdjustScalebarLength)
             testCase.verifyEqual(hMenuItem.Checked, matlab.lang.OnOffSwitchState.off)
         end
@@ -268,7 +268,7 @@ classdef ScalebarTest < matlab.unittest.TestCase
 
             testCase.verifyError( ...
                 @() setLocationToCenter(hScalebar), ...
-                'scalebar:InvalidLocation')
+                'MATLAB:validators:mustBeMember')
         end
 
         function testAutomaticYLengthUsesYAxisRange(testCase)

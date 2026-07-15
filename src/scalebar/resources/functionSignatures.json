@@ -1,0 +1,147 @@
+{
+  "_schemaVersion": "1.0.0",
+  "scalebar.scalebar": {
+    "inputs": [
+      {
+        "mutuallyExclusiveGroup": [
+          [
+            {
+              "name": "ax",
+              "kind": "required",
+              "type": ["matlab.graphics.axis.Axes", "scalar"],
+              "purpose": "Axes containing the scale bar"
+            },
+            {
+              "name": "scalebarLength",
+              "kind": "ordered",
+              "type": ["double", "scalar"],
+              "purpose": "Physical length of the scale bar"
+            },
+            {
+              "name": "unitLabel",
+              "kind": "ordered",
+              "type": [["char", "row"], ["string", "scalar"]],
+              "purpose": "Text appended to the scale-bar length"
+            }
+          ],
+          [
+            {
+              "name": "scalebarLength",
+              "kind": "ordered",
+              "type": ["double", "scalar"],
+              "purpose": "Physical length of the scale bar"
+            },
+            {
+              "name": "unitLabel",
+              "kind": "ordered",
+              "type": [["char", "row"], ["string", "scalar"]],
+              "purpose": "Text appended to the scale-bar length"
+            }
+          ]
+        ]
+      },
+      {
+        "name": "Parent",
+        "kind": "namevalue",
+        "type": ["matlab.graphics.axis.Axes", "scalar"],
+        "purpose": "Axes containing the scale bar"
+      },
+      {
+        "name": "Axis",
+        "kind": "namevalue",
+        "type": ["choices={'x','y'}"],
+        "purpose": "Axis on which to draw the scale bar"
+      },
+      {
+        "name": "ScalebarLength",
+        "kind": "namevalue",
+        "type": ["double", "scalar"],
+        "purpose": "Physical length of the scale bar"
+      },
+      {
+        "name": "UnitLabel",
+        "kind": "namevalue",
+        "type": [["char", "row"], ["string", "scalar"]],
+        "purpose": "Text appended to the scale-bar length"
+      },
+      {
+        "name": "ConversionFactor",
+        "kind": "namevalue",
+        "type": ["double", "scalar", ">0"],
+        "purpose": "Data units per scale-bar unit"
+      },
+      {
+        "name": "AutoAdjustScalebarLength",
+        "kind": "namevalue",
+        "type": ["logical", "scalar"],
+        "purpose": "Automatically update the scale-bar length"
+      },
+      {
+        "name": "AutoScalebarLength",
+        "kind": "namevalue",
+        "type": ["double", "scalar", ">0"],
+        "purpose": "Automatic length as a percentage of the axes range"
+      },
+      {
+        "name": "Location",
+        "kind": "namevalue",
+        "type": ["choices={'northeast','northwest','southeast','southwest','northeastoutside','northwestoutside','southeastoutside','southwestoutside'}"],
+        "purpose": "Corner in which to place the scale bar"
+      },
+      {
+        "name": "Color",
+        "kind": "namevalue",
+        "purpose": "Color of the scale-bar line and text"
+      },
+      {
+        "name": "LineWidth",
+        "kind": "namevalue",
+        "type": ["double", "scalar", ">0"],
+        "purpose": "Width of the scale-bar line"
+      },
+      {
+        "name": "TextSpacing",
+        "kind": "namevalue",
+        "type": ["double", "scalar", ">=0"],
+        "purpose": "Pixel spacing between the line and its label"
+      },
+      {
+        "name": "FontName",
+        "kind": "namevalue",
+        "type": [["char", "row"], ["string", "scalar"]],
+        "purpose": "Font for the scale-bar label"
+      },
+      {
+        "name": "FontSize",
+        "kind": "namevalue",
+        "type": ["double", "scalar", ">0"],
+        "purpose": "Font size of the scale-bar label"
+      },
+      {
+        "name": "FontWeight",
+        "kind": "namevalue",
+        "type": ["choices={'normal','bold'}"],
+        "purpose": "Font weight of the scale-bar label"
+      },
+      {
+        "name": "Margin",
+        "kind": "namevalue",
+        "type": ["double", "numel=2"],
+        "purpose": "Horizontal and vertical pixel offsets from the axes corner"
+      },
+      {
+        "name": "Visible",
+        "kind": "namevalue",
+        "type": ["choices={'on','off'}"],
+        "purpose": "Visibility of the scale bar"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "hScalebar",
+        "type": "scalebar",
+        "purpose": "Scale-bar object"
+      }
+    ]
+  }
+}

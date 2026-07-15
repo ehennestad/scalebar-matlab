@@ -1,52 +1,49 @@
-% scalebar Create a scalebar showing magnitude with optional unit
+%SCALEBAR Add a scale bar to axes.
 %
-%   hScalebar = scalebar() creates a scalebar in the current axes
+%   hScalebar = scalebar() adds an automatically sized horizontal scale bar
+%   to the current axes.
 %
-%   hScalebar = scalebar(axis) creates a scalebar on the specified axis.
-%   Axis can be 'x' or 'y'. Default is 'x'.
+%   hScalebar = scalebar(scalebarLength) sets the physical scale-bar length.
+%   hScalebar = scalebar(scalebarLength, unitLabel) also sets the label
+%   appended to the length.
 %
-%   hScalebar = scalebar(axis, n) creates a scalebar with length given by n
+%   hScalebar = scalebar(hAxes, ___) adds the scale bar to hAxes instead of
+%   the current axes.
 %
-%   hScalebar = scalebar(__, unit) adds a unit label for the scalebar. Unit
-%   is a character vector
+%   hScalebar = scalebar(___, Name=Value) configures public properties using
+%   one or more name-value arguments. For example, use Axis="y" to create a
+%   vertical scale bar.
 %
-%   hScalebar = scalebar(hParent, __) creates the scalebar in the specified
-%   parent. hParent must be a valid Axes.
+%   The legacy positional axis syntax, scalebar(axis, ___), is also accepted.
 %
-%   hScalebar = scalebar(__, Name, Value, ...)  sets scalebar properties
-%   using one or more name-value pair arguments.
+%   Public Properties:
+%       Parent                       - Target axes.
+%       Axis                         - Scale-bar orientation: "x" or "y".
+%       ScalebarLength               - Physical length; NaN selects an
+%                                      automatic length.
+%       UnitLabel                    - Text appended to the displayed length.
+%       ConversionFactor             - Data units per scale-bar unit.
+%       AutoAdjustScalebarLength     - Automatically update the length when
+%                                      axes limits change.
+%       AutoScalebarLength           - Automatic length as a percentage of
+%                                      the relevant axes range.
+%       Location                     - Axes corner for the scale bar; append
+%                                      "outside" to place it beyond the axes.
+%       Color                        - Line and text color.
+%       LineWidth                    - Scale-bar line width.
+%       TextSpacing                  - Pixel gap between the line and label.
+%       FontName                     - Label font name.
+%       FontSize                     - Label font size.
+%       FontWeight                   - Label font weight: "normal" or "bold".
+%       Margin                       - Two-element pixel offset from the
+%                                      selected axes corner.
+%       Visible                      - Visibility state: "on" or "off".
 %
+%   Example:
+%     hAxes = axes();
 %
-%   Options (Name-value pairs)
-%       ConversionFactor : Conversion factor (if data units are different
-%           than scalebar units). For example: If scalebar units is in mm
-%           and 150 pixels of an image corresponds to 1 mm,
-%           ConversionFactor should be 150.
-%       Location      : northwest, southeast, southwestoutside etc
-%       Color         : Color of scalebar line and text
-%       LineWidth     : Width of scalebar line
-%       Margin        : Pixel units of offset from corner of axes.
-%       + FontSize, FontWeight, FontName etc.
-%
-%       type open scalebar in matlabs command window to see all public
-%       properties of the scalebar.
-%
-%
-%   EXAMPLE:
-%     f = figure();
-%     hAx = axes(f);
-%
-%     imshow('cell.tif', 'Parent', hAx);
-%
-%     pixPerUm = 5;
-%     scalebarLength = 10  % scalebar will be 10 micrometer long
-%     label = sprintf('%sm', '\mu'); % micrometer
-%
-%     hScalebar = scalebar(hAx, 'x', scalebarLength, label, 'Location', 'southeast', ...
-%         'ConversionFactor', pixPerUm);
-%
-%     % Change color of scalebar
-%     hScalebar.Color = 'w';
+%     hScalebar = scalebar(hAxes, 10, "um", ...
+%         ConversionFactor=5, Location="southeastoutside", Color="w");
 
 % Todo:
 %   [ ] Position + units property?
@@ -57,40 +54,72 @@ classdef scalebar < handle
 %SCALEBAR Add scalebar to axes
 
     properties
-        Axis (1,:) char {mustBeMember(Axis, {'x', 'y'})} = 'x' % Axis to place scalebar ('x' or 'y')
-        ScalebarLength (1,1) double = nan  % Length of scalebar in "physical" units
-        UnitLabel (1,1) string = ""        % Unit label, ie 'um'
+        % Axis - Orientation of the scale bar: 'x' or 'y'.
+        Axis (1,:) char {mustBeMember(Axis, {'x', 'y'})} = 'x'
 
-        ConversionFactor (1,1) double = 1 % Unit conversion if axes limits are in different units
-                       % than the units of the plot or image. E.g if 1mm in an
-                       % image is 150 pixels, ConversionFactor should be 150.
-                       % conversionFactor = data unit per scalebar unit
+        % ScalebarLength - Physical length, or NaN for automatic sizing.
+        ScalebarLength (1,1) double = nan
 
+        % UnitLabel - Text appended to the displayed scale-bar length.
+        UnitLabel (1,1) string = ""
+
+        % ConversionFactor - Number of data units per scale-bar unit.
+        ConversionFactor (1,1) double = 1
+
+        % AutoAdjustScalebarLength - Update the automatic length with axes limits.
         AutoAdjustScalebarLength (1,1) logical = false;
-        AutoScalebarLength (1,1) double = 20; % In percentage of axes size...
 
-        Location = 'southeastoutside'  % northwest, southeast, southwestoutside etc
-        Color = 'k'             % Color specification for line and text
-        LineWidth (1,1) double {mustBeNonnegative} = 1 % Width of scalebar
+        % AutoScalebarLength - Automatic length as a percentage of the axes range.
+        AutoScalebarLength (1,1) double = 20;
 
-        TextSpacing (1,1) double {mustBeNonnegative} = 2;        % Spacing (offset) between scalebar line and text in pixels
+        % Location - Axes corner for the scale bar, optionally suffixed by 'outside'.
+        Location (1,1) string {mustBeMember(Location, ...
+            [ ...
+            "southeast", ...
+            "southwest", ...
+            "northeast", ...
+            "northwest", ...
+            "southeastoutside", ...
+            "southwestoutside", ...
+            "northeastoutside", ...
+            "northwestoutside"] ...
+            ) ...
+        } = 'southeast'
+
+        % Color - Color specification for the scale-bar line and text.
+        Color = 'k'
+
+        % LineWidth - Width of the scale-bar line.
+        LineWidth (1,1) double {mustBeNonnegative} = 1
+
+        % TextSpacing - Pixel gap between the scale-bar line and label.
+        TextSpacing (1,1) double {mustBeNonnegative} = 2;
+
+        % FontName - Font used for the scale-bar label.
         FontName = 'Helvetica Neue';
-        FontSize = 10;          % Fontsize of scalebar text
-        FontWeight = 'normal'   % Fontweight of scalebar text
 
-        Margin = [10, 10]       % Pixel units of offset from corner of image.
+        % FontSize - Font size of the scale-bar label.
+        FontSize = 10;
+
+        % FontWeight - Font weight of the scale-bar label.
+        FontWeight = 'normal'
+
+        % Margin - Horizontal and vertical pixel offsets from the axes corner.
+        Margin = [10, 10]
     end
 
     properties (Dependent)
+        % Parent - Axes containing the scale bar.
         Parent
+        % Visible - Visibility state of the scale bar.
         Visible matlab.lang.OnOffSwitchState
     end
 
     properties (Access = private)
         hAxes               % Handle for the axes
-        hScalebarLine       % Handle for the scalebar's line
-        hScalebarText       % Handle for the scalebar's text label
-        ContextMenu         % Handle for scalebar's contextmenu
+        hScalebarLine       % Handle for the scale bar's line
+        hScalebarText       % Handle for the scale bar's text label
+        ContextMenu         % Handle for scale bar's context menu
         VisibleState matlab.lang.OnOffSwitchState = 'on'
 
         IsConstructed = false
@@ -117,7 +146,7 @@ classdef scalebar < handle
 
     methods % Constructor/destructor
 
-        function obj = scalebar(varargin)
+        function obj = scalebar(varargin, propValues)
         %SCALEBAR Construct an instance of this class
         %
         %   hScalebar = scalebar() creates a scalebar in the current axes
@@ -128,8 +157,17 @@ classdef scalebar < handle
             arguments (Repeating)
                 varargin
             end
+            arguments
+                propValues.?scalebar
+            end
 
-            [hParent, positionalPairs, nvPairs] = parseConstructorInputs(varargin{:});
+            [hParent, positionalPairs, ~] = parseConstructorInputs(varargin{:});
+            hasPositionalParent = ~isempty(varargin) && ...
+                isa(varargin{1}, 'matlab.graphics.axis.Axes');
+            if hasPositionalParent && isfield(propValues, 'Parent')
+                error('scalebar:DuplicateParent', ...
+                    'Specify the parent axes either positionally or as Parent, not both.')
+            end
             obj.Parent = hParent;
 
             % Apply positional values before style preferences. This keeps the
@@ -141,6 +179,7 @@ classdef scalebar < handle
             preferencePairs = prefs2props();
             obj.assignPVPairs(preferencePairs{:})
 
+            nvPairs = namedargs2cell(propValues);
             obj.assignPVPairs(nvPairs{:})
 
             % % Start creating scalebar
@@ -592,38 +631,38 @@ classdef scalebar < handle
             hMenu = uicontextmenu(hFigure);
 
             mItem = uimenu(hMenu, 'Text', 'Configure Scalebar...');
-            mItem.Callback = @(s,e) obj.uiEditScalebar;
+            mItem.Callback = @(s,e) obj.onConfigureScalebarClicked;
 
             mItem = uimenu(hMenu, 'Text', 'Autoadjust Scalebar');
             mItem.Checked = checked{ obj.AutoAdjustScalebarLength + 1 };
-            mItem.Callback = @(s,e) obj.setAutoadjustScalebar(s);
+            mItem.Callback = @(s,e) obj.onAutoadjustScalebarClicked(s);
 
             mItem = uimenu(hMenu, 'Text', 'Set Color...', 'Separator', 'on');
-            mItem.Callback = @(s,e) obj.setColor;
+            mItem.Callback = @(s,e) obj.onSetColorClicked;
 
             mItem = uimenu(hMenu, 'Text', 'Set Line Width');
             for i = 1:6
                 mSubItem = uimenu(mItem, 'Text', num2str(i, '%d'));
                 mSubItem.Checked = checked{ isequal(i, obj.LineWidth) + 1 };
-                mSubItem.Callback = @(s,e) obj.setLineWidth(i);
+                mSubItem.Callback = @(s,e) obj.onSetLineWidthClicked(i);
             end
 
             mItem = uimenu(hMenu, 'Text', 'Set Font Size');
             for i = 0:6
                 mSubItem = uimenu(mItem, 'Text', num2str(i+10, '%d'));
                 mSubItem.Checked = checked{ isequal(i+10, obj.FontSize) + 1 };
-                mSubItem.Callback = @(s,e) obj.setFontSize(i+10);
+                mSubItem.Callback = @(s,e) obj.onSetFontSizeClicked(i+10);
             end
 
             mItem = uimenu(hMenu, 'Text', 'Set Font...');
-            mItem.Callback = @(s,e) obj.setFont;
+            mItem.Callback = @(s,e) obj.onSetFontClicked;
 
             mItem = uimenu(hMenu, 'Text', 'Location');
             locations = {'southeast', 'southwest', 'northwest', 'northeast'};
             for i = 1:numel(locations)
                 mSubItem = uimenu(mItem, 'Text', locations{i});
                 mSubItem.Checked = checked{ strcmp(locations{i}, obj.Location) + 1 };
-                mSubItem.Callback = @(s,e) obj.setLocation(locations{i});
+                mSubItem.Callback = @(s,e) obj.onSetLocationClicked(locations{i});
             end
 
             mItem = uimenu(hMenu, 'Text', 'Save Current Style', 'Separator', 'on');
@@ -846,12 +885,11 @@ classdef scalebar < handle
         end
     end
 
-    methods
-
-        function uiEditScalebar(obj)
-            definput = {num2str(obj.ScalebarLength), obj.UnitLabel, num2str(obj.ConversionFactor)};
+    methods (Access = private) % Context menu callbacks
+        function onConfigureScalebarClicked(obj)
+            defaultInput = {num2str(obj.ScalebarLength), obj.UnitLabel, num2str(obj.ConversionFactor)};
             answer = inputdlg({'Enter scalebar length', 'Enter scalebar unit', ...
-                'Enter conversion ratio'}, 'Enter scalebar info', 1, definput);
+                'Enter conversion ratio'}, 'Enter scalebar info', 1, defaultInput);
             if isempty(answer); return; end
 
             scalebarLength = str2double(answer{1});
@@ -863,7 +901,7 @@ classdef scalebar < handle
             obj.ConversionFactor = conversionFactor;
         end
 
-        function setAutoadjustScalebar(obj, src)
+        function onAutoadjustScalebarClicked(obj, src)
             arguments
                 obj (1,1) scalebar
                 src (1,1) matlab.ui.container.Menu
@@ -879,7 +917,7 @@ classdef scalebar < handle
             end
         end
 
-        function setLineWidth(obj, lineWidth)
+        function onSetLineWidthClicked(obj, lineWidth)
             arguments
                 obj (1,1) scalebar
                 lineWidth (1,1) double {mustBeFinite, mustBePositive}
@@ -887,7 +925,7 @@ classdef scalebar < handle
             obj.LineWidth = lineWidth;
         end
 
-        function setFontSize(obj, fontSize)
+        function onSetFontSizeClicked(obj, fontSize)
             arguments
                 obj (1,1) scalebar
                 fontSize (1,1) double {mustBeFinite, mustBePositive}
@@ -895,7 +933,7 @@ classdef scalebar < handle
             obj.FontSize = fontSize;
         end
 
-        function setColor(obj)
+        function onSetColorClicked(obj)
             c = uisetcolor('Select scalebar color');
             if isequal( c, 0)
                 return % User canceled
@@ -904,7 +942,7 @@ classdef scalebar < handle
             end
         end
 
-        function setFont(obj)
+        function onSetFontClicked(obj)
 
             opts = uisetfont(obj.hScalebarText);
             if isequal( opts, 0)
@@ -916,7 +954,7 @@ classdef scalebar < handle
             end
         end
 
-        function setLocation(obj, newLocation)
+        function onSetLocationClicked(obj, newLocation)
             arguments
                 obj (1,1) scalebar
                 newLocation (1,1) string {mustBeValidLocation}
