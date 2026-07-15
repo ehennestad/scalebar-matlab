@@ -10,12 +10,16 @@ function generateReadmeImages()
     addpath(fullfile(repositoryRoot, "src", "examples"), "-begin")
 
     hFigure = createImageExample("off");
+    hFigure.Position(3:4) = [640 460];
+    drawnow
     exportgraphics(hFigure, ...
         fullfile(outputFolder, "scalebar-image-example.png"), ...
         "Resolution", 150, "BackgroundColor", "current")
     close(hFigure)
 
     hFigure = createPlotExample("off");
+    hFigure.Position(3:4) = [840 360];
+    drawnow
     exportgraphics(hFigure, ...
         fullfile(outputFolder, "scalebar-plot-example.png"), ...
         "Resolution", 150, "BackgroundColor", "current")

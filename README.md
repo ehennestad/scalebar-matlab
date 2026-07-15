@@ -10,6 +10,36 @@
 
 `scalebar` adds configurable horizontal and vertical scale bars to MATLAB axes. It is intended for calibrated images and plots whose axes have meaningful units. Scale bars update when axes limits or size change, and can be configured through properties or their context menu.
 
+## Examples
+
+### Calibrated image
+
+The [complete image example](src/examples/createImageExample.m) creates the
+following pseudocoloured microscopy image and adds a 25 µm scale bar. From the
+repository root, run it with:
+
+```matlab
+addpath("src/examples")
+createImageExample
+```
+
+<p align="center">
+  <img src="docs/images/scalebar-image-example.png" width="500" alt="Pseudocoloured microscopy image with a 25 µm scale bar">
+</p>
+
+### Plot data
+
+The [complete plot example](src/examples/createPlotExample.m) simulates a
+membrane-potential trace and adds horizontal and vertical scale bars. From the
+repository root, run it with:
+
+```matlab
+addpath("src/examples")
+createPlotExample
+```
+
+![Membrane-potential trace with 500 ms and 50 mV scale bars](docs/images/scalebar-plot-example.png)
+
 ## Requirements
 
 MATLAB R2019b or later.
@@ -20,12 +50,9 @@ example have no toolbox dependency.
 
 ## Installation
 
-The recommended installation route is through MATLAB File Exchange:
-
-1. Open the [scalebar File Exchange page](https://se.mathworks.com/matlabcentral/fileexchange/109114-scalebar-for-images-and-plots).
-2. Select **Download** and then **Install** in MATLAB. This installs the toolbox as an add-on and manages the MATLAB path for you.
-
-You can also search for **scalebar** in MATLAB's Add-On Explorer. For manual installation, download a `.mltbx` file from the [latest release](https://github.com/ehennestad/scalebar-matlab/releases/latest) and open it in MATLAB.
+Install **scalebar** from MATLAB's **Add-On Explorer**; it manages the MATLAB
+path automatically. Alternatively, select **Download** and then **Install** on
+the [scalebar File Exchange page](https://se.mathworks.com/matlabcentral/fileexchange/109114-scalebar-for-images-and-plots).
 
 ## Quick start
 
@@ -41,43 +68,6 @@ scalebar(50, "pixels", ...
     Location="southeast", ...
     Color="w", ...
     LineWidth=2)
-```
-
-## Examples
-
-### Calibrated image
-
-The [complete image example](src/examples/createImageExample.m) creates the
-following pseudocoloured microscopy image and adds a 25 µm scale bar. From the
-repository root, run it with:
-
-```matlab
-addpath("src/examples")
-createImageExample
-```
-
-![Pseudocoloured microscopy image with a 25 µm scale bar](docs/images/scalebar-image-example.png)
-
-### Plot data
-
-The [complete plot example](src/examples/createPlotExample.m) simulates a
-membrane-potential trace and adds horizontal and vertical scale bars. From the
-repository root, run it with:
-
-```matlab
-addpath("src/examples")
-createPlotExample
-```
-
-![Membrane-potential trace with 500 ms and 50 mV scale bars](docs/images/scalebar-plot-example.png)
-
-To regenerate the README images after changing either example, run
-[`generateReadmeImages`](tools/generateReadmeImages.m) from the repository
-root:
-
-```matlab
-addpath("tools")
-generateReadmeImages
 ```
 
 ## Usage
