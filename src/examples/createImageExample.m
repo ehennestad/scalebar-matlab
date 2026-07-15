@@ -21,8 +21,8 @@ function hFigure = createImageExample(visibility)
         exist("stretchlim", "file") == 2;
     if ~hasImageProcessingSupport
         error("scalebar:ImageExampleRequiresImageProcessingToolbox", ...
-            ["createImageExample requires Image Processing Toolbox for " ...
-             "the cell.tif sample image and image-processing functions."])
+             "createImageExample requires Image Processing Toolbox for " + ...
+             "the cell.tif sample image and image-processing functions.")
     end
 
     imageData = im2double(imread("cell.tif"));
