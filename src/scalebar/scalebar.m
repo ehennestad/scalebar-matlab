@@ -962,16 +962,6 @@ classdef scalebar < handle
             obj.Location = newLocation;
         end
     end
-
-    methods (Static)
-        function demo()
-            scalebarDemo()
-        end
-
-        function test()
-            testScalebar()
-        end
-    end
 end
 
 function [hParent, positionalPairs, nvPairs] = parseConstructorInputs(varargin)
@@ -1098,45 +1088,4 @@ function nvPairs = prefs2props()
 
     nvPairs = cat(1, propNames, prefValues);
     nvPairs = transpose( nvPairs(:) );
-end
-
-function hScalebar = scalebarDemo()
-
-    f = figure();
-    hAx = axes(f);
-
-    imshow('cell.tif', 'Parent', hAx);
-
-    pixPerUm = 5;
-    scalebarLength = 10;  % scalebar will be 10 micrometer long
-    label = sprintf('%sm', '\mu'); % micrometer
-
-    hScalebar = scalebar(hAx, 'x', scalebarLength, label, 'Location', 'southeast', ...
-        'ConversionFactor', pixPerUm, 'Margin', [10,10]);
-
-    if ~nargout; clear hScalebar; end
-end
-
-function testScalebar()
-
-    figure;
-    ax = axes;
-    imshow(imread('cameraman.tif'))
-
-    axis = {'x', 'y'};
-    locs = {'northeast', 'northwest', 'southeast', 'southwest'};
-
-    for i = 1:2
-        for j = 1:4
-            for k = 1:2
-                loc = locs{j};
-                c = 'w';
-                if k == 2
-                    loc = strcat(loc, 'outside');
-                    c = 'r';
-                end
-                scalebar(ax, axis{i}, 50, 'pixels', 'ConversionFactor', 1, 'Location', loc, 'Color', c, 'LineWidth', 2)
-            end
-        end
-    end
 end
