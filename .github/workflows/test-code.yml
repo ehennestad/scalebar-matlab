@@ -38,6 +38,9 @@ jobs:
 
       # Name of MATLAB Release to use for running test suites and code analysis
       matlab_release: latest
+
+      matlab_products: >
+        Image_Processing_Toolbox
       
       # Whether to cache the MATLAB installation for faster subsequent setups
       matlab_use_cache: true
