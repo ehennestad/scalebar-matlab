@@ -87,6 +87,62 @@ classdef ScalebarTest < matlab.unittest.TestCase
             testCase.verifyEqual(hText.Rotation, 90)
         end
 
+        function testVerticalTextSpacingMovesEastLabelLeft(testCase)
+            hScalebar = testCase.createScalebar( ...
+                "y", 2, "mm", "Location", "southeast");
+            hText = findobj(testCase.Axes, 'Tag', 'Scalebar Text');
+
+            initialXPosition = hText.Position(1);
+            hScalebar.TextSpacing = 20;
+
+            testCase.verifyLessThan(hText.Position(1), initialXPosition)
+        end
+
+        function testVerticalTextSpacingRespectsReversedXAxis(testCase)
+            testCase.Axes.XDir = 'reverse';
+            hScalebar = testCase.createScalebar( ...
+                "y", 2, "mm", "Location", "southeast");
+            hText = findobj(testCase.Axes, 'Tag', 'Scalebar Text');
+
+            initialXPosition = hText.Position(1);
+            hScalebar.TextSpacing = 20;
+
+            testCase.verifyGreaterThan(hText.Position(1), initialXPosition)
+        end
+
+        function testVerticalTextSpacingMovesWestLabelRight(testCase)
+            hScalebar = testCase.createScalebar( ...
+                "y", 2, "mm", "Location", "southwest");
+            hText = findobj(testCase.Axes, 'Tag', 'Scalebar Text');
+
+            initialXPosition = hText.Position(1);
+            hScalebar.TextSpacing = 20;
+
+            testCase.verifyGreaterThan(hText.Position(1), initialXPosition)
+        end
+
+        function testVerticalTextSpacingMovesEastOutsideLabelRight(testCase)
+            hScalebar = testCase.createScalebar( ...
+                "y", 2, "mm", "Location", "southeastoutside");
+            hText = findobj(testCase.Axes, 'Tag', 'Scalebar Text');
+
+            initialXPosition = hText.Position(1);
+            hScalebar.TextSpacing = 20;
+
+            testCase.verifyGreaterThan(hText.Position(1), initialXPosition)
+        end
+
+        function testVerticalTextSpacingMovesWestOutsideLabelLeft(testCase)
+            hScalebar = testCase.createScalebar( ...
+                "y", 2, "mm", "Location", "southwestoutside");
+            hText = findobj(testCase.Axes, 'Tag', 'Scalebar Text');
+
+            initialXPosition = hText.Position(1);
+            hScalebar.TextSpacing = 20;
+
+            testCase.verifyLessThan(hText.Position(1), initialXPosition)
+        end
+
         function testEnablingAutomaticLengthUpdatesScalebar(testCase)
             hScalebar = testCase.createScalebar("x", 1, "mm");
 

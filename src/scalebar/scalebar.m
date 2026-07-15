@@ -496,9 +496,10 @@ classdef scalebar < handle
 
             xData = calculateXData(obj) ;
             yData = calculateYData(obj) ;
+            xLim = obj.hAxes.XLim;
             yLim = obj.hAxes.YLim;
 
-            [xSign, ySign] = configurePositionDirection(obj); %#ok<ASGLU>
+            [~, ySign] = configurePositionDirection(obj);
 
             if strcmp(obj.hAxes.YDir, 'reverse')
                 ySign = -ySign;
@@ -521,7 +522,23 @@ classdef scalebar < handle
                 case 'x'
                     txtPos = struct('x', xData(1)+diff(xData)/2, 'y', yData(1) + yOffset);
                 case 'y'
-                    txtPos = struct('x', xData(1), 'y', yData(1)+diff(yData)/2);
+                    xOffset = obj.TextSpacing + obj.LineWidth/2;
+                    xOffset = (max(xLim)-min(xLim)) * ...
+                        (xOffset/obj.AxesSizePixels(1));
+
+                    % Rotated text uses its vertical alignment to select the
+                    % visual side of a vertical scale bar. Apply the requested
+                    % gap on that same side, accounting for reversed x axes.
+                    if strcmp(vert, 'bottom')
+                        xOffset = -xOffset;
+                    end
+                    if strcmp(obj.hAxes.XDir, 'reverse')
+                        xOffset = -xOffset;
+                    end
+
+                    txtPos = struct( ...
+                        'x', xData(1) + xOffset, ...
+                        'y', yData(1)+diff(yData)/2);
             end
 
             if strcmp(obj.hAxes.YDir, 'reverse')
