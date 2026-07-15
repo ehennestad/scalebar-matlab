@@ -200,6 +200,18 @@ classdef ScalebarTest < matlab.unittest.TestCase
                 matlab.lang.OnOffSwitchState.on)
         end
 
+        function testEnabledBackgroundReceivesContextMenu(testCase)
+            hScalebar = testCase.createScalebar( ...
+                "x", 2, "mm", ShowBackground=false);
+            hText = findobj(testCase.Axes, 'Tag', 'Scalebar Text');
+
+            hScalebar.ShowBackground = true;
+            hBackground = findobj(testCase.Axes, 'Tag', 'Scalebar Background');
+
+            testCase.verifyEqual(hBackground.ContextMenu, hText.ContextMenu)
+            testCase.verifyEqual(hBackground.PickableParts, 'visible')
+        end
+
         function testBackgroundPatchMovesWithScalebar(testCase)
             hScalebar = testCase.createScalebar( ...
                 "x", 2, "mm", ShowBackground=true);
