@@ -9,6 +9,8 @@
         "Summary": "Scalebar for images and plots",
         "Description": "Create a scalebar object for x- and or y-axis. Scalebar appearance is configured on creation, through setting of properties, or interactively using a context menu.",
         "MinimumMatlabRelease": "R2019b",
-        "MaximumMatlabRelease": ""
+        "MaximumMatlabRelease": "",
+        "ToolboxImageFile": "tools/resources/toolbox/toolbox_image.png",
+        "ToolboxGettingStartedGuide": "src/GettingStarted.m"
     }
 }
