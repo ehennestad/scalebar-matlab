@@ -241,7 +241,7 @@ classdef scalebar < handle
             delete(obj.ContextMenu)
             delete(obj.hScalebarLine)
             delete(obj.hScalebarText)
-            if isgraphics(obj.hScalebarBackground)
+            if obj.hasBackground()
                 delete(obj.hScalebarBackground)
             end
         end
@@ -271,7 +271,7 @@ classdef scalebar < handle
             if obj.IsConstructed
                 obj.hScalebarLine.Visible = newValue;
                 obj.hScalebarText.Visible = newValue;
-                if isgraphics(obj.hScalebarBackground)
+                if obj.hasBackground()
                     obj.hScalebarBackground.Visible = newValue;
                 end
             end
@@ -712,14 +712,14 @@ classdef scalebar < handle
 
         function plotBackground(obj)
             if ~obj.ShowBackground
-                if isgraphics(obj.hScalebarBackground)
+                if obj.hasBackground()
                     obj.hScalebarBackground.Visible = 'off';
                 end
                 return
             end
 
             [xData, yData] = obj.calculateBackgroundVertices();
-            if ~isgraphics(obj.hScalebarBackground)
+            if ~obj.hasBackground()
                 obj.hScalebarBackground = patch(obj.hAxes, xData, yData, ...
                     obj.BackgroundColor, EdgeColor='none', ...
                     FaceAlpha=obj.BackgroundAlpha, ...
@@ -841,7 +841,7 @@ classdef scalebar < handle
 
             obj.hScalebarText.ContextMenu = hMenu;
             obj.hScalebarLine.ContextMenu = hMenu;
-            if isgraphics(obj.hScalebarBackground)
+            if obj.hasBackground()
                 obj.hScalebarBackground.ContextMenu = hMenu;
             end
 
@@ -919,6 +919,11 @@ classdef scalebar < handle
 
     methods (Access = private) % Internal updating
 
+        function tf = hasBackground(obj)
+            tf = ~isempty(obj.hScalebarBackground) && ...
+                isgraphics(obj.hScalebarBackground);
+        end
+
         function validateAxes(~, hAxes)
             assert(isa(hAxes, 'matlab.graphics.axis.Axes') && isvalid(hAxes), ...
                 'First argument must be a valid axes object')
@@ -958,14 +963,14 @@ classdef scalebar < handle
         end
 
         function onBackgroundColorChanged(obj, newValue)
-            if ~obj.IsConstructed || ~isgraphics(obj.hScalebarBackground)
+            if ~obj.IsConstructed || ~obj.hasBackground()
                 return
             end
             obj.hScalebarBackground.FaceColor = newValue;
         end
 
         function onBackgroundAlphaChanged(obj, newValue)
-            if ~obj.IsConstructed || ~isgraphics(obj.hScalebarBackground)
+            if ~obj.IsConstructed || ~obj.hasBackground()
                 return
             end
             obj.hScalebarBackground.FaceAlpha = newValue;
@@ -989,7 +994,7 @@ classdef scalebar < handle
 
             obj.hScalebarLine.Parent = obj.hAxes;
             obj.hScalebarText.Parent = obj.hAxes;
-            if isgraphics(obj.hScalebarBackground)
+            if obj.hasBackground()
                 obj.hScalebarBackground.Parent = obj.hAxes;
             end
             obj.deleteListeners()

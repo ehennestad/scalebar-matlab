@@ -178,6 +178,39 @@ classdef ScalebarTest < matlab.unittest.TestCase
             testCase.verifyEqual(hText.FontWeight, 'bold')
         end
 
+        function testBackgroundPropertiesCreateAndUpdatePatch(testCase)
+            hScalebar = testCase.createScalebar( ...
+                "x", 2, "mm", ShowBackground=true, ...
+                BackgroundColor=[0.2 0.3 0.4], BackgroundAlpha=0.6, ...
+                BackgroundPadding=5);
+            hBackground = findobj(testCase.Axes, 'Tag', 'Scalebar Background');
+
+            testCase.verifyNumElements(hBackground, 1)
+            testCase.verifyEqual(hBackground.FaceColor, [0.2 0.3 0.4])
+            testCase.verifyEqual(hBackground.FaceAlpha, 0.6)
+
+            hScalebar.BackgroundAlpha = 0.4;
+            hScalebar.ShowBackground = false;
+            testCase.verifyEqual(hBackground.FaceAlpha, 0.4)
+            testCase.verifyEqual(hBackground.Visible, ...
+                matlab.lang.OnOffSwitchState.off)
+
+            hScalebar.ShowBackground = true;
+            testCase.verifyEqual(hBackground.Visible, ...
+                matlab.lang.OnOffSwitchState.on)
+        end
+
+        function testBackgroundPatchMovesWithScalebar(testCase)
+            hScalebar = testCase.createScalebar( ...
+                "x", 2, "mm", ShowBackground=true);
+            hBackground = findobj(testCase.Axes, 'Tag', 'Scalebar Background');
+            initialXData = hBackground.XData;
+
+            hScalebar.Margin = [20 20];
+
+            testCase.verifyNotEqual(hBackground.XData, initialXData)
+        end
+
         function testConversionFactorUpdatesLineLength(testCase)
             hScalebar = testCase.createScalebar("x", 2, "mm");
             hLine = findobj(testCase.Axes, 'Tag', 'Scalebar Line');
@@ -349,7 +382,8 @@ classdef ScalebarTest < matlab.unittest.TestCase
 
         function testSaveCurrentStyleContextMenuCallback(testCase)
             preferenceNames = {'FontSize', 'FontWeight', 'LineWidth', ...
-                'Color', 'Location', 'FontName'};
+                'Color', 'Location', 'FontName', 'ShowBackground', ...
+                'BackgroundColor', 'BackgroundAlpha', 'BackgroundPadding'};
             [hadPreference, preferenceValues] = ...
                 testCase.captureStylePreferences(preferenceNames);
             testCase.addTeardown(@() testCase.restoreStylePreferences( ...
