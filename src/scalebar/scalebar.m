@@ -743,8 +743,8 @@ classdef scalebar < handle
             lineYData = obj.hScalebarLine.YData;
             textExtent = obj.getTextExtentInDataUnits();
 
-            xRange = range(obj.hAxes.XLim);
-            yRange = range(obj.hAxes.YLim);
+            xRange = diff(obj.hAxes.XLim);
+            yRange = diff(obj.hAxes.YLim);
             xPadding = xRange * obj.BackgroundPadding / obj.AxesSizePixels(1);
             yPadding = yRange * obj.BackgroundPadding / obj.AxesSizePixels(2);
             xLineHalfWidth = xRange * obj.LineWidth / ...
