@@ -8,11 +8,15 @@
 [![Run Codespell](https://github.com/ehennestad/scalebar-matlab/actions/workflows/run-codespell.yml/badge.svg)](https://github.com/ehennestad/scalebar-matlab/actions/workflows/run-codespell.yml)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://gitHub.com/ehennestad/scalebar-matlab/graphs/commit-activity)
 
-`scalebar` adds a configurable horizontal or vertical scale bar to an axes. It is intended for image data and plots whose axes have meaningful spatial units. The scale bar updates when the axes limits or size change, and can be configured through properties or its context menu.
+`scalebar` adds configurable horizontal and vertical scale bars to MATLAB axes. It is intended for calibrated images and plots whose axes have meaningful units. Scale bars update when axes limits or size change, and can be configured through properties or their context menu.
 
 ## Requirements
 
 MATLAB R2019b or later.
+
+The image example additionally requires Image Processing Toolbox for MATLAB's
+`cell.tif` sample image and contrast processing. The `scalebar` class and plot
+example have no toolbox dependency.
 
 ## Installation
 
@@ -25,67 +29,77 @@ You can also search for **scalebar** in MATLAB's Add-On Explorer. For manual ins
 
 ## Quick start
 
-Create an image and add a scale bar in the lower-right corner:
+Create an image and add a horizontal scale bar in the lower-right corner:
 
 ```matlab
-imageData = peaks(256);
-
-figure
-imagesc(imageData)
+figure(Color="k")
+imagesc(peaks(256))
 axis image off
-colormap parula
+colormap turbo
 
-scalebar('x', 50, 'pixels', ...
-    'Location', 'southeast', ...
-    'Color', 'w', ...
-    'LineWidth', 2);
+scalebar(50, "pixels", ...
+    Location="southeast", ...
+    Color="w", ...
+    LineWidth=2)
 ```
 
-The MATLAB sample image can be used in the same way:
+## Examples
+
+### Calibrated image
+
+The [complete image example](src/examples/createImageExample.m) creates the
+following pseudocoloured microscopy image and adds a 25 µm scale bar. From the
+repository root, run it with:
 
 ```matlab
-imageData = imread('cameraman.tif');
-
-figure
-imagesc(imageData)
-axis image off
-colormap gray
-
-scalebar('x', 50, 'pixels', ...
-    'Location', 'southeast', ...
-    'Color', 'w', ...
-    'LineWidth', 2);
+addpath("src/examples")
+createImageExample
 ```
 
-For calibrated image data, specify the physical scale-bar length and the number of data units per physical unit:
+![Pseudocoloured microscopy image with a 25 µm scale bar](docs/images/scalebar-image-example.png)
+
+### Plot data
+
+The [complete plot example](src/examples/createPlotExample.m) simulates a
+membrane-potential trace and adds horizontal and vertical scale bars. From the
+repository root, run it with:
 
 ```matlab
-pixelsPerMicrometer = 2;
-
-scalebar('x', 25, 'um', ...
-    'ConversionFactor', pixelsPerMicrometer, ...
-    'Location', 'southeastoutside', ...
-    'Color', 'w');
+addpath("src/examples")
+createPlotExample
 ```
 
-## Constructor
+![Membrane-potential trace with 500 ms and 50 mV scale bars](docs/images/scalebar-plot-example.png)
+
+To regenerate the README images after changing either example, run
+[`generateReadmeImages`](tools/generateReadmeImages.m) from the repository
+root:
+
+```matlab
+addpath("tools")
+generateReadmeImages
+```
+
+## Usage
 
 ```matlab
 hScalebar = scalebar()
-hScalebar = scalebar(axis, scalebarLength, unitLabel, Name, Value)
-hScalebar = scalebar(hAxes, axis, scalebarLength, unitLabel, Name, Value)
+hScalebar = scalebar(scalebarLength)
+hScalebar = scalebar(scalebarLength, unitLabel)
+hScalebar = scalebar(hAxes, ___)
+hScalebar = scalebar(___, Name=Value)
 ```
 
 - `hAxes` is the target axes. If omitted, the current axes is used.
-- `axis` is `'x'` or `'y'`; the default is `'x'`.
 - `scalebarLength` is the physical length to display. If omitted, an appropriate length is calculated from the axes limits.
 - `unitLabel` is the text appended to the displayed length. Use `'um'` for a micrometre label.
+- `Axis="x"` creates a horizontal bar; `Axis="y"` creates a vertical bar.
 
 The constructor accepts character vectors and string scalars. It returns a handle object, so appearance can be changed after creation:
 
 ```matlab
-hScalebar = scalebar('x', 10, 'mm');
-hScalebar.Color = 'w';
+hScalebar = scalebar(10, "mm", Location="northwest");
+hScalebar.Color = "w";
 hScalebar.Location = "northwest";
 ```
 
@@ -93,6 +107,7 @@ hScalebar.Location = "northwest";
 
 | Option | Description |
 | --- | --- |
+| `Axis` | Scale-bar orientation: `"x"` or `"y"`. |
 | `ConversionFactor` | Number of data units per scale-bar unit. For example, use `2` when two pixels represent one micrometre. |
 | `Location` | One of `northeast`, `northwest`, `southeast`, or `southwest`, optionally suffixed with `outside`. |
 | `Color`, `LineWidth` | Line and text appearance. |

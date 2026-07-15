@@ -1,0 +1,49 @@
+function hFigure = createImageExample(visibility)
+%CREATEIMAGEEXAMPLE Create a calibrated microscopy image scale-bar example.
+%
+%   createImageExample() displays a pseudocoloured microscopy image with a
+%   25 um scale bar. This example requires Image Processing Toolbox for the
+%   MATLAB sample image and contrast processing.
+
+    if nargin < 1
+        visibility = "on";
+    end
+
+    sourceRoot = fileparts(fileparts(mfilename("fullpath")));
+    addpath(fullfile(sourceRoot, "scalebar"), "-begin")
+
+    if exist("cell.tif", "file") ~= 2
+        error("scalebar:ImageExampleRequiresImageProcessingToolbox", ...
+            ["createImageExample requires Image Processing Toolbox for " ...
+             "the cell.tif sample image and image-processing functions."])
+    end
+
+    imageData = im2double(imread("cell.tif"));
+    imageData = mat2gray(imgaussfilt(imageData, 0.45));
+    imageData = adapthisteq(imageData, "NumTiles", [8 8], ...
+        "ClipLimit", 0.012, "Distribution", "rayleigh", "Alpha", 0.42);
+    imageData = imadjust(imageData, stretchlim(imageData, [0.01 0.995]), ...
+        [0 1], 0.78);
+
+    colorStops = [0.00 0.00 0.01; ...
+                  0.05 0.01 0.16; ...
+                  0.24 0.03 0.43; ...
+                  0.10 0.38 0.66; ...
+                  0.18 0.78 0.75; ...
+                  0.98 0.93 0.45];
+    fluorescenceMap = interp1(linspace(0, 1, size(colorStops, 1)), ...
+        colorStops, linspace(0, 1, 256), "pchip");
+
+    hFigure = figure("Color", "k", "Units", "pixels", ...
+        "Position", [100 100 1140 820], "Visible", visibility);
+    hAxes = axes(hFigure, "Position", [0 0 1 1]);
+    imagesc(hAxes, imageData)
+    colormap(hAxes, fluorescenceMap)
+    axis(hAxes, "image", "off")
+
+    hScalebar = scalebar(hAxes, 25, "µm", ...
+        ConversionFactor=1.5, Location="southeast", Color="w", ...
+        LineWidth=3.2, FontName="Helvetica Neue", FontSize=15, ...
+        Margin=[14 12], TextSpacing=5);
+    setappdata(hFigure, "ExampleScalebar", hScalebar)
+end
