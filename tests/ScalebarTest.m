@@ -9,7 +9,8 @@ classdef ScalebarTest < matlab.unittest.TestCase
     methods (TestMethodSetup)
         function createAxes(testCase)
             repositoryRoot = fileparts(fileparts(mfilename('fullpath')));
-            addpath(fullfile(repositoryRoot, 'src', 'scalebar'))
+            testCase.applyFixture(matlab.unittest.fixtures.PathFixture( ...
+                fullfile(repositoryRoot, 'src', 'scalebar')))
 
             testCase.Figure = figure('Visible', 'off');
             testCase.Axes = axes(testCase.Figure);
@@ -448,7 +449,7 @@ classdef ScalebarTest < matlab.unittest.TestCase
 
             testCase.verifyError( ...
                 @() setLocationToCenter(hScalebar), ...
-                'MATLAB:validators:mustBeMember')
+                'scalebar:InvalidLocation')
         end
 
         function testAutomaticYLengthUsesYAxisRange(testCase)

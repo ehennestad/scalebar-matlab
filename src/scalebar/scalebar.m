@@ -43,16 +43,14 @@
 %       BackgroundPadding            - Pixel padding around the scale bar.
 %       Visible                      - Visibility state: "on" or "off".
 %
+%   Styles saved with the context menu's "Save Current Style" item persist
+%   across MATLAB sessions and are applied to every new scalebar.
+%
 %   Example:
 %     hAxes = axes();
 %
 %     hScalebar = scalebar(hAxes, 10, "um", ...
 %         ConversionFactor=5, Location="southeastoutside", Color="w");
-
-% Todo:
-%   [ ] Position + units property?
-%   [ ] Autogenerate code - given some settings, create snippet for
-%       recreating scalebar
 
 classdef scalebar < handle
 %SCALEBAR Add scalebar to axes
@@ -76,25 +74,15 @@ classdef scalebar < handle
         % AutoScalebarLength - Automatic length as a percentage of the axes range.
         AutoScalebarLength (1,1) double = 20;
 
-        % Location - Axes corner for the scale bar, optionally suffixed by 'outside'.
-        Location (1,1) string {mustBeMember(Location, ...
-            [ ...
-            "southeast", ...
-            "southwest", ...
-            "northeast", ...
-            "northwest", ...
-            "southeastoutside", ...
-            "southwestoutside", ...
-            "northeastoutside", ...
-            "northwestoutside"] ...
-            ) ...
-        } = 'southeast'
+        % Location - Axes corner for the scale bar, i.e., southeast, northwest, 
+        % etc. Optionally suffixed by 'outside'. 
+        Location (1,1) string {mustBeValidLocation} = "southeast"
 
         % Color - Color specification for the scale-bar line and text.
         Color = 'k'
 
         % LineWidth - Width of the scale-bar line.
-        LineWidth (1,1) double {mustBeNonnegative} = 1
+        LineWidth (1,1) double {mustBePositive} = 1
 
         % TextSpacing - Pixel gap between the scale-bar line and label.
         TextSpacing (1,1) double {mustBeNonnegative} = 2;
@@ -203,7 +191,7 @@ classdef scalebar < handle
             nvPairs = namedargs2cell(propValues);
             obj.assignPVPairs(nvPairs{:})
 
-            % % Start creating scalebar
+            % Start creating scalebar
             isHoldOn = ishold(obj.hAxes);
             hold(obj.hAxes, 'on')
 
@@ -311,7 +299,6 @@ classdef scalebar < handle
             end
             obj.ConversionFactor = newValue;
             obj.updateScalebar()
-            % obj.updateTextLabel()
             obj.updateTextPosition()
         end
 
@@ -321,7 +308,6 @@ classdef scalebar < handle
                 newValue (1,1) double {mustBeValidScalebarLength}
             end
             obj.ScalebarLength = newValue;
-            % obj.updateScalebar()
             obj.updateTextLabel()
             obj.updatePosition();
         end
@@ -609,16 +595,11 @@ classdef scalebar < handle
                         'x', xData(1) + xOffset, ...
                         'y', yData(1)+diff(yData)/2);
             end
-
-            if strcmp(obj.hAxes.YDir, 'reverse')
-                % txtPos.y = yLim(2) - (txtPos.y - yLim(1));
-            end
         end
 
-        function textLabel = getTextLabel(obj) % todo: dependent?
+        function textLabel = getTextLabel(obj)
         %getTextLabel Get formatted text label
 
-        % Add text
             n = obj.ScalebarLength;
 
             if strcmp(obj.UnitLabel, 'um') % Special case..
@@ -627,7 +608,6 @@ classdef scalebar < handle
                 unitLabel = obj.UnitLabel;
             end
 
-            % Todo....
             if isequal(n, round(n))
                 textLabel = sprintf('%d %s', n, unitLabel);
             else
@@ -651,10 +631,6 @@ classdef scalebar < handle
                         vert = 'top';
                     end
             end
-
-            % Todo: X:  north: text under line. South: text over line
-            % Todo: y:  west: text right of line. east: text left of line
-            % Reverse when scalebar is outside of axes....
         end
 
         function plotScalebar(obj)
@@ -667,7 +643,6 @@ classdef scalebar < handle
             % bar can not pin a data tip in the host axes. As a bonus, a
             % primitive line never clears existing axes content.
             obj.hScalebarLine = line(obj.hAxes, xData, yData);
-            % obj.hScalebarLine.HandleVisibility = 'off';
             obj.hScalebarLine.Tag = 'Scalebar Line';
             excludeFromDataTips(obj.hScalebarLine)
 
@@ -675,10 +650,7 @@ classdef scalebar < handle
                 @(s,e) obj.delete);
 
             % Make sure scalebar is not clipped.
-            % if contains(obj.Location, 'outside')
-                set(obj.hScalebarLine, 'Clipping', 'off')
-                % set(obj.hAxes, 'Clipping', 'on')
-            % end
+            set(obj.hScalebarLine, 'Clipping', 'off')
 
             obj.hScalebarLine.Color = obj.Color;
             obj.hScalebarLine.LineWidth = obj.LineWidth;
@@ -697,7 +669,6 @@ classdef scalebar < handle
                     textLabel, 'Color', obj.Color, 'FontSize', ...
                     obj.FontSize, 'FontWeight', obj.FontWeight, ...
                     'FontName', obj.FontName);
-                % obj.hScalebarText.HandleVisibility = 'off';
                 obj.hScalebarText.Tag = 'Scalebar Text';
                 excludeFromDataTips(obj.hScalebarText)
             else
@@ -920,12 +891,14 @@ classdef scalebar < handle
                 case 'Line Width'
                     menuItem = findobj(obj.ContextMenu, 'Text', 'Set Line Width');
                     menuSubItem = menuItem.Children;
-                    isMatched = strcmp({menuSubItem.Text}, num2str(obj.LineWidth, '%d'));
+                    % Compare numerically so non-integer values (which have
+                    % no menu entry) leave every item unchecked.
+                    isMatched = str2double({menuSubItem.Text}) == obj.LineWidth;
 
                 case 'Font Size'
                     menuItem = findobj(obj.ContextMenu, 'Text', 'Set Font Size');
                     menuSubItem = menuItem.Children;
-                    isMatched = strcmp({menuSubItem.Text}, num2str(obj.FontSize, '%d'));
+                    isMatched = str2double({menuSubItem.Text}) == obj.FontSize;
 
                 case 'Location'
                     menuItem = findobj(obj.ContextMenu, 'Text', 'Location');
@@ -1156,11 +1129,6 @@ classdef scalebar < handle
             scalebarLengthRu_ = round(scalebarLengthRu_);
             scalebarLengthRu_ = scalebarLengthRu_ .* 10^x;
 
-% %             if scalebarLengthRu_ == 0
-% %                 x = x + sign(x);
-% %                 scalebarLengthRu_ = round(scalebarLengthRu/5, -x) * 5;
-% %             end
-
             % Set autoadjusted scalebar length
             obj.ScalebarLength = scalebarLengthRu_;
         end
@@ -1383,13 +1351,18 @@ function nvPairs = prefs2props()
 
     [~, groupName, ~] = fileparts(mfilename('fullpath'));
     propNames = scalebar.STYLE_PROPS;
-    % todo: get from mc...
-    defaultValues = {12, 'normal', 1, 'k', 'southeast', 'Helvetica Neue', ...
-        false, [0.5 0.5 0.5], 0.3, 3};
+
+    % Fall back to the defaults declared in the property blocks so the
+    % class definition stays the single source of truth.
+    metaProperties = ?scalebar;
+    metaPropertyNames = {metaProperties.PropertyList.Name};
     prefValues = cell(1, numel(propNames));
 
     for i = 1:numel(propNames)
-        prefValues{i} = getpref(groupName, propNames{i}, defaultValues{i});
+        metaProperty = metaProperties.PropertyList( ...
+            strcmp(metaPropertyNames, propNames{i}));
+        prefValues{i} = getpref(groupName, propNames{i}, ...
+            metaProperty.DefaultValue);
     end
 
     nvPairs = cat(1, propNames, prefValues);

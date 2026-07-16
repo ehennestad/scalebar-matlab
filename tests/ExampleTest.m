@@ -3,7 +3,8 @@ classdef ExampleTest < matlab.unittest.TestCase
     methods (Test)
         function testPlotExampleCreatesTwoScalebars(testCase)
             repositoryRoot = fileparts(fileparts(mfilename("fullpath")));
-            addpath(fullfile(repositoryRoot, "src", "examples"))
+            testCase.applyFixture(matlab.unittest.fixtures.PathFixture( ...
+                fullfile(repositoryRoot, "src", "examples")))
 
             hFigure = createPlotExample("off");
             testCase.addTeardown(@() close(hFigure))
@@ -15,7 +16,8 @@ classdef ExampleTest < matlab.unittest.TestCase
 
         function testImageExampleHandlesToolboxAvailability(testCase)
             repositoryRoot = fileparts(fileparts(mfilename("fullpath")));
-            addpath(fullfile(repositoryRoot, "src", "examples"))
+            testCase.applyFixture(matlab.unittest.fixtures.PathFixture( ...
+                fullfile(repositoryRoot, "src", "examples")))
 
             hasImageProcessingSupport = ...
                 exist("cell.tif", "file") == 2 && ...
@@ -41,7 +43,8 @@ classdef ExampleTest < matlab.unittest.TestCase
 
         function testBackgroundExampleCreatesScalebarBackground(testCase)
             repositoryRoot = fileparts(fileparts(mfilename("fullpath")));
-            addpath(fullfile(repositoryRoot, "src", "examples"))
+            testCase.applyFixture(matlab.unittest.fixtures.PathFixture( ...
+                fullfile(repositoryRoot, "src", "examples")))
 
             hFigure = createBackgroundExample("off");
             testCase.addTeardown(@() close(hFigure))
