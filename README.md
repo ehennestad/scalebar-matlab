@@ -58,7 +58,7 @@ createBackgroundExample
 
 ## Requirements
 
-MATLAB R2019b or later.
+MATLAB R2021a or later.
 
 The image example additionally requires Image Processing Toolbox for MATLAB's
 `cell.tif` sample image and contrast processing. The `scalebar` class and plot
@@ -131,7 +131,7 @@ See the [contributing guidelines](.github/CONTRIBUTING.md).
 
 ## License
 
-A license has not yet been selected for this project.
+This project is licensed under the [MIT License](LICENSE).
 
 ## Author
 
