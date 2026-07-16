@@ -337,7 +337,6 @@ classdef scalebar < handle
             obj.updateTextPosition()
             obj.updateBackground()
             obj.updateContextMenu('Line Width')
-            obj.updateBackground();
         end
 
         function set.FontName(obj, newValue)
@@ -732,10 +731,10 @@ classdef scalebar < handle
 
             if ~obj.hasBackground()
                 obj.hScalebarBackground = patch(obj.hAxes, xData, yData, ...
-                    obj.BackgroundColor, EdgeColor='none', ...
-                    FaceAlpha=obj.BackgroundAlpha, ...
-                    Clipping='off', PickableParts='visible', ...
-                    Tag='Scalebar Background');
+                    obj.BackgroundColor, 'EdgeColor', 'none', ...
+                    'FaceAlpha', obj.BackgroundAlpha, ...
+                    'Clipping', 'off', 'PickableParts', 'visible', ...
+                    'Tag', 'Scalebar Background');
                 if ~isempty(obj.ContextMenu)
                     obj.hScalebarBackground.ContextMenu = obj.ContextMenu;
                 end
@@ -743,8 +742,7 @@ classdef scalebar < handle
                 % menu), so data tips are excluded per object instead of
                 % turning off HitTest.
                 excludeFromDataTips(obj.hScalebarBackground)
-                % Keep the patch beneath the scale bar, but above image data.
-                uistack(obj.hScalebarBackground, 'down', 2)
+                obj.restackBackground()
             else
                 obj.hScalebarBackground.XData = xData;
                 obj.hScalebarBackground.YData = yData;
@@ -752,6 +750,26 @@ classdef scalebar < handle
                 obj.hScalebarBackground.FaceAlpha = obj.BackgroundAlpha;
                 obj.hScalebarBackground.Visible = obj.Visible;
             end
+        end
+
+        function restackBackground(obj)
+        %restackBackground Place the background directly beneath the scale bar
+        %
+        %   The child order is rebuilt explicitly instead of using relative
+        %   uistack steps, so the patch ends up immediately beneath the
+        %   scale-bar line and text even when other objects were added to
+        %   the axes after the scale bar was created.
+
+            hChildren = obj.hAxes.Children;
+            hChildren(hChildren == obj.hScalebarBackground) = [];
+            insertIndex = max([ ...
+                find(hChildren == obj.hScalebarLine, 1), ...
+                find(hChildren == obj.hScalebarText, 1)]);
+            if isempty(insertIndex)
+                return % Scale-bar graphics not parented to the axes yet.
+            end
+            obj.hAxes.Children = [hChildren(1:insertIndex); ...
+                obj.hScalebarBackground; hChildren(insertIndex+1:end)];
         end
 
         function [xData, yData] = calculateBackgroundVertices(obj)

@@ -24,4 +24,12 @@ function generateReadmeImages()
         fullfile(outputFolder, "scalebar-plot-example.png"), ...
         "Resolution", 150, "BackgroundColor", "current")
     close(hFigure)
+
+    hFigure = createBackgroundExample("off");
+    hFigure.Position(3:4) = [640 512];
+    drawnow
+    exportgraphics(hFigure, ...
+        fullfile(outputFolder, "scalebar-background-example.png"), ...
+        "Resolution", 150, "BackgroundColor", "current")
+    close(hFigure)
 end

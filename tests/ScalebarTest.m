@@ -212,6 +212,25 @@ classdef ScalebarTest < matlab.unittest.TestCase
             testCase.verifyEqual(hBackground.PickableParts, 'visible')
         end
 
+        function testLateBackgroundStacksBeneathScalebar(testCase)
+            hScalebar = testCase.createScalebar( ...
+                "x", 2, "mm", ShowBackground=false);
+            % Add content after construction so the newest axes children
+            % are no longer the scale-bar line and text.
+            line(testCase.Axes, [0, 10], [10, 0])
+
+            hScalebar.ShowBackground = true;
+
+            hChildren = testCase.Axes.Children;
+            hBackground = findobj(testCase.Axes, 'Tag', 'Scalebar Background');
+            hLine = findobj(testCase.Axes, 'Tag', 'Scalebar Line');
+            hText = findobj(testCase.Axes, 'Tag', 'Scalebar Text');
+            testCase.verifyGreaterThan(find(hChildren == hBackground), ...
+                find(hChildren == hLine))
+            testCase.verifyGreaterThan(find(hChildren == hBackground), ...
+                find(hChildren == hText))
+        end
+
         function testBackgroundPatchMovesWithScalebar(testCase)
             hScalebar = testCase.createScalebar( ...
                 "x", 2, "mm", ShowBackground=true);
