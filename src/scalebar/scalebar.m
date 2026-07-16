@@ -74,10 +74,9 @@ classdef scalebar < handle
         % AutoScalebarLength - Automatic length as a percentage of the axes range.
         AutoScalebarLength (1,1) double = 20;
 
-        % Location - Axes corner for the scale bar, optionally suffixed by 'outside'.
-        % Validated by the set method so the supported values live in one
-        % place (see mustBeValidLocation).
-        Location (1,1) string = "southeast"
+        % Location - Axes corner for the scale bar, i.e., southeast, northwest, 
+        % etc. Optionally suffixed by 'outside'. 
+        Location (1,1) string {mustBeValidLocation} = "southeast"
 
         % Color - Color specification for the scale-bar line and text.
         Color = 'k'
