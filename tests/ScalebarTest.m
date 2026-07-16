@@ -223,6 +223,66 @@ classdef ScalebarTest < matlab.unittest.TestCase
             testCase.verifyNotEqual(hBackground.XData, initialXData)
         end
 
+        function testInsideBackgroundKeepsScalebarWithinAxes(testCase)
+            testCase.createScalebar( ...
+                "x", 2, "mm", Location="southeast", Margin=[0 0], ...
+                FontSize=18, ShowBackground=true, BackgroundPadding=12);
+            hBackground = findobj(testCase.Axes, 'Tag', 'Scalebar Background');
+            hLine = findobj(testCase.Axes, 'Tag', 'Scalebar Line');
+            hText = findobj(testCase.Axes, 'Tag', 'Scalebar Text');
+
+            originalUnits = hText.Units;
+            hText.Units = 'data';
+            textExtent = hText.Extent;
+            hText.Units = originalUnits;
+
+            testCase.verifyGreaterThanOrEqual(min(hBackground.XData), ...
+                min(testCase.Axes.XLim))
+            testCase.verifyLessThanOrEqual(max(hBackground.XData), ...
+                max(testCase.Axes.XLim))
+            testCase.verifyGreaterThanOrEqual(min(hBackground.YData), ...
+                min(testCase.Axes.YLim))
+            testCase.verifyLessThanOrEqual(max(hBackground.YData), ...
+                max(testCase.Axes.YLim))
+            testCase.verifyGreaterThanOrEqual(min(hLine.XData), ...
+                min(testCase.Axes.XLim))
+            testCase.verifyGreaterThanOrEqual(min(hLine.YData), ...
+                min(testCase.Axes.YLim))
+            testCase.verifyGreaterThanOrEqual(textExtent(1), ...
+                min(hBackground.XData))
+            testCase.verifyLessThanOrEqual(textExtent(1) + textExtent(3), ...
+                max(hBackground.XData))
+            testCase.verifyGreaterThanOrEqual(textExtent(2), ...
+                min(hBackground.YData))
+            testCase.verifyLessThanOrEqual(textExtent(2) + textExtent(4), ...
+                max(hBackground.YData))
+        end
+
+        function testOutsideBackgroundRemainsOutsideAxes(testCase)
+            testCase.createScalebar( ...
+                "x", 2, "mm", Location="southeastoutside", ...
+                ShowBackground=true, BackgroundPadding=12);
+            hBackground = findobj(testCase.Axes, 'Tag', 'Scalebar Background');
+
+            testCase.verifyLessThan(min(hBackground.YData), ...
+                min(testCase.Axes.YLim))
+            testCase.verifyEqual(hBackground.Clipping, ...
+                matlab.lang.OnOffSwitchState.off)
+        end
+
+        function testReversedYAxisBackgroundEnclosesHorizontalText(testCase)
+            testCase.Axes.YDir = 'reverse';
+            testCase.createScalebar( ...
+                "x", 2, "mm", Location="southeast", Margin=[0 0], ...
+                FontSize=18, ShowBackground=true, BackgroundPadding=12);
+            hBackground = findobj(testCase.Axes, 'Tag', 'Scalebar Background');
+            hText = findobj(testCase.Axes, 'Tag', 'Scalebar Text');
+            textExtent = hText.Extent;
+
+            testCase.verifyLessThanOrEqual(min(hBackground.YData), ...
+                textExtent(2) - textExtent(4))
+        end
+
         function testConversionFactorUpdatesLineLength(testCase)
             hScalebar = testCase.createScalebar("x", 2, "mm");
             hLine = findobj(testCase.Axes, 'Tag', 'Scalebar Line');

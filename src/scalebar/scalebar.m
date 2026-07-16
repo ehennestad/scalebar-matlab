@@ -663,10 +663,14 @@ classdef scalebar < handle
             xData = calculateXData(obj) ;
             yData = calculateYData(obj) ;
 
-            % Plot scalebar
-            obj.hScalebarLine = plot(obj.hAxes, xData, yData);
+            % Plot scalebar. Use a primitive line (not plot/chart line):
+            % primitives carry no DataTipTemplate, so clicking the scale
+            % bar can not pin a data tip in the host axes. As a bonus, a
+            % primitive line never clears existing axes content.
+            obj.hScalebarLine = line(obj.hAxes, xData, yData);
             % obj.hScalebarLine.HandleVisibility = 'off';
             obj.hScalebarLine.Tag = 'Scalebar Line';
+            excludeFromDataTips(obj.hScalebarLine)
 
             addlistener(obj.hScalebarLine, 'ObjectBeingDestroyed', ...
                 @(s,e) obj.delete);
@@ -696,6 +700,7 @@ classdef scalebar < handle
                     'FontName', obj.FontName);
                 % obj.hScalebarText.HandleVisibility = 'off';
                 obj.hScalebarText.Tag = 'Scalebar Text';
+                excludeFromDataTips(obj.hScalebarText)
             else
                 obj.hScalebarText.Position(1:2) = [txtPos.x, txtPos.y];
             end
@@ -719,6 +724,12 @@ classdef scalebar < handle
             end
 
             [xData, yData] = obj.calculateBackgroundVertices();
+            [xOffset, yOffset] = obj.calculateInsideBackgroundOffset(xData, yData);
+            if xOffset ~= 0 || yOffset ~= 0
+                obj.translateScalebar(xOffset, yOffset)
+                [xData, yData] = obj.calculateBackgroundVertices();
+            end
+
             if ~obj.hasBackground()
                 obj.hScalebarBackground = patch(obj.hAxes, xData, yData, ...
                     obj.BackgroundColor, EdgeColor='none', ...
@@ -728,7 +739,12 @@ classdef scalebar < handle
                 if ~isempty(obj.ContextMenu)
                     obj.hScalebarBackground.ContextMenu = obj.ContextMenu;
                 end
-                uistack(obj.hScalebarBackground, 'bottom')
+                % The patch must stay clickable (right-click context
+                % menu), so data tips are excluded per object instead of
+                % turning off HitTest.
+                excludeFromDataTips(obj.hScalebarBackground)
+                % Keep the patch beneath the scale bar, but above image data.
+                uistack(obj.hScalebarBackground, 'down', 2)
             else
                 obj.hScalebarBackground.XData = xData;
                 obj.hScalebarBackground.YData = yData;
@@ -764,6 +780,27 @@ classdef scalebar < handle
                 max([lineYData + yLineHalfWidth, textExtent(4)]) + yPadding];
         end
 
+        function [xOffset, yOffset] = calculateInsideBackgroundOffset( ...
+                obj, xData, yData)
+            xOffset = 0;
+            yOffset = 0;
+            if contains(obj.Location, 'outside')
+                return
+            end
+
+            xLimits = sort(obj.hAxes.XLim);
+            yLimits = sort(obj.hAxes.YLim);
+            xOffset = calculateContainmentOffset(min(xData), max(xData), xLimits);
+            yOffset = calculateContainmentOffset(min(yData), max(yData), yLimits);
+        end
+
+        function translateScalebar(obj, xOffset, yOffset)
+            obj.hScalebarLine.XData = obj.hScalebarLine.XData + xOffset;
+            obj.hScalebarLine.YData = obj.hScalebarLine.YData + yOffset;
+            obj.hScalebarText.Position(1:2) = ...
+                obj.hScalebarText.Position(1:2) + [xOffset, yOffset];
+        end
+
         function extent = getTextExtentInDataUnits(obj)
             originalUnits = obj.hScalebarText.Units;
             obj.hScalebarText.Units = 'data';
@@ -771,7 +808,11 @@ classdef scalebar < handle
             obj.hScalebarText.Units = originalUnits;
 
             xEnd = textExtent(1) + textExtent(3);
-            yEnd = textExtent(2) + textExtent(4);
+            if strcmp(obj.hAxes.YDir, 'reverse')
+                yEnd = textExtent(2) - textExtent(4);
+            else
+                yEnd = textExtent(2) + textExtent(4);
+            end
             extent = [min(textExtent(1), xEnd), max(textExtent(1), xEnd), ...
                 min(textExtent(2), yEnd), max(textExtent(2), yEnd)];
         end
@@ -1294,6 +1335,15 @@ function mustBeValidLocation(value)
     end
 end
 
+function offset = calculateContainmentOffset(lowerBound, upperBound, limits)
+    offset = 0;
+    if lowerBound < limits(1) && upperBound <= limits(2)
+        offset = limits(1) - lowerBound;
+    elseif upperBound > limits(2) && lowerBound >= limits(1)
+        offset = limits(2) - upperBound;
+    end
+end
+
 function mustBeValidScalebarLength(value)
     if ~(isnan(value) || (isfinite(value) && value > 0))
         error('scalebar:InvalidScalebarLength', ...
@@ -1326,4 +1376,24 @@ function nvPairs = prefs2props()
 
     nvPairs = cat(1, propNames, prefValues);
     nvPairs = transpose( nvPairs(:) );
+end
+
+function excludeFromDataTips(hObjects)
+%excludeFromDataTips Keep data tips off scale bar graphics
+%
+%   Disables the data-cursor behavior per object. In java-based figures
+%   clicking a graphics object pins a data tip even when the object has
+%   its own ButtonDownFcn; the behavior object is what the data-cursor
+%   machinery consults. Does not affect HitTest, ButtonDownFcn or
+%   ContextMenu, and the host axes is left untouched (data tips on the
+%   user's own data keep working).
+
+    for i = 1:numel(hObjects)
+        try
+            hBehavior = hggetbehavior(hObjects(i), 'DataCursor');
+            hBehavior.Enable = false;
+        catch
+            % Object type without behavior support; nothing to exclude.
+        end
+    end
 end

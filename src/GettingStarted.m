@@ -30,6 +30,10 @@ createImageExample(); %[output:7db439f4]
 %[text] The plot example creates a simulated membrane-potential trace. It uses `Axis="x"` for a 500 ms time bar and `Axis="y"` for a 50 mV magnitude bar.
 createPlotExample(); %[output:789cccdd]
 %%
+%[text] ## Semi-transparent background
+%[text] A background keeps a scale bar readable over a detailed image. The example below uses `ShowBackground=true`; adjust `BackgroundColor`, `BackgroundAlpha`, and `BackgroundPadding` in the example to explore the appearance.
+createBackgroundExample();
+%%
 %[text] ## Next steps
 %[text] Use the returned `hScalebar` object to adjust properties such as `Location`, `Color`, and `TextSpacing`. See the README for all supported name-value options.
 
