@@ -178,6 +178,130 @@ classdef ScalebarTest < matlab.unittest.TestCase
             testCase.verifyEqual(hText.FontWeight, 'bold')
         end
 
+        function testBackgroundPropertiesCreateAndUpdatePatch(testCase)
+            hScalebar = testCase.createScalebar( ...
+                "x", 2, "mm", ShowBackground=true, ...
+                BackgroundColor=[0.2 0.3 0.4], BackgroundAlpha=0.6, ...
+                BackgroundPadding=5);
+            hBackground = findobj(testCase.Axes, 'Tag', 'Scalebar Background');
+
+            testCase.verifyNumElements(hBackground, 1)
+            testCase.verifyEqual(hBackground.FaceColor, [0.2 0.3 0.4])
+            testCase.verifyEqual(hBackground.FaceAlpha, 0.6)
+
+            hScalebar.BackgroundAlpha = 0.4;
+            hScalebar.ShowBackground = false;
+            testCase.verifyEqual(hBackground.FaceAlpha, 0.4)
+            testCase.verifyEqual(hBackground.Visible, ...
+                matlab.lang.OnOffSwitchState.off)
+
+            hScalebar.ShowBackground = true;
+            testCase.verifyEqual(hBackground.Visible, ...
+                matlab.lang.OnOffSwitchState.on)
+        end
+
+        function testEnabledBackgroundReceivesContextMenu(testCase)
+            hScalebar = testCase.createScalebar( ...
+                "x", 2, "mm", ShowBackground=false);
+            hText = findobj(testCase.Axes, 'Tag', 'Scalebar Text');
+
+            hScalebar.ShowBackground = true;
+            hBackground = findobj(testCase.Axes, 'Tag', 'Scalebar Background');
+
+            testCase.verifyEqual(hBackground.ContextMenu, hText.ContextMenu)
+            testCase.verifyEqual(hBackground.PickableParts, 'visible')
+        end
+
+        function testLateBackgroundStacksBeneathScalebar(testCase)
+            hScalebar = testCase.createScalebar( ...
+                "x", 2, "mm", ShowBackground=false);
+            % Add content after construction so the newest axes children
+            % are no longer the scale-bar line and text.
+            line(testCase.Axes, [0, 10], [10, 0])
+
+            hScalebar.ShowBackground = true;
+
+            hChildren = testCase.Axes.Children;
+            hBackground = findobj(testCase.Axes, 'Tag', 'Scalebar Background');
+            hLine = findobj(testCase.Axes, 'Tag', 'Scalebar Line');
+            hText = findobj(testCase.Axes, 'Tag', 'Scalebar Text');
+            testCase.verifyGreaterThan(find(hChildren == hBackground), ...
+                find(hChildren == hLine))
+            testCase.verifyGreaterThan(find(hChildren == hBackground), ...
+                find(hChildren == hText))
+        end
+
+        function testBackgroundPatchMovesWithScalebar(testCase)
+            hScalebar = testCase.createScalebar( ...
+                "x", 2, "mm", ShowBackground=true);
+            hBackground = findobj(testCase.Axes, 'Tag', 'Scalebar Background');
+            initialXData = hBackground.XData;
+
+            hScalebar.Margin = [20 20];
+
+            testCase.verifyNotEqual(hBackground.XData, initialXData)
+        end
+
+        function testInsideBackgroundKeepsScalebarWithinAxes(testCase)
+            testCase.createScalebar( ...
+                "x", 2, "mm", Location="southeast", Margin=[0 0], ...
+                FontSize=18, ShowBackground=true, BackgroundPadding=12);
+            hBackground = findobj(testCase.Axes, 'Tag', 'Scalebar Background');
+            hLine = findobj(testCase.Axes, 'Tag', 'Scalebar Line');
+            hText = findobj(testCase.Axes, 'Tag', 'Scalebar Text');
+
+            originalUnits = hText.Units;
+            hText.Units = 'data';
+            textExtent = hText.Extent;
+            hText.Units = originalUnits;
+
+            testCase.verifyGreaterThanOrEqual(min(hBackground.XData), ...
+                min(testCase.Axes.XLim))
+            testCase.verifyLessThanOrEqual(max(hBackground.XData), ...
+                max(testCase.Axes.XLim))
+            testCase.verifyGreaterThanOrEqual(min(hBackground.YData), ...
+                min(testCase.Axes.YLim))
+            testCase.verifyLessThanOrEqual(max(hBackground.YData), ...
+                max(testCase.Axes.YLim))
+            testCase.verifyGreaterThanOrEqual(min(hLine.XData), ...
+                min(testCase.Axes.XLim))
+            testCase.verifyGreaterThanOrEqual(min(hLine.YData), ...
+                min(testCase.Axes.YLim))
+            testCase.verifyGreaterThanOrEqual(textExtent(1), ...
+                min(hBackground.XData))
+            testCase.verifyLessThanOrEqual(textExtent(1) + textExtent(3), ...
+                max(hBackground.XData))
+            testCase.verifyGreaterThanOrEqual(textExtent(2), ...
+                min(hBackground.YData))
+            testCase.verifyLessThanOrEqual(textExtent(2) + textExtent(4), ...
+                max(hBackground.YData))
+        end
+
+        function testOutsideBackgroundRemainsOutsideAxes(testCase)
+            testCase.createScalebar( ...
+                "x", 2, "mm", Location="southeastoutside", ...
+                ShowBackground=true, BackgroundPadding=12);
+            hBackground = findobj(testCase.Axes, 'Tag', 'Scalebar Background');
+
+            testCase.verifyLessThan(min(hBackground.YData), ...
+                min(testCase.Axes.YLim))
+            testCase.verifyEqual(hBackground.Clipping, ...
+                matlab.lang.OnOffSwitchState.off)
+        end
+
+        function testReversedYAxisBackgroundEnclosesHorizontalText(testCase)
+            testCase.Axes.YDir = 'reverse';
+            testCase.createScalebar( ...
+                "x", 2, "mm", Location="southeast", Margin=[0 0], ...
+                FontSize=18, ShowBackground=true, BackgroundPadding=12);
+            hBackground = findobj(testCase.Axes, 'Tag', 'Scalebar Background');
+            hText = findobj(testCase.Axes, 'Tag', 'Scalebar Text');
+            textExtent = hText.Extent;
+
+            testCase.verifyLessThanOrEqual(min(hBackground.YData), ...
+                textExtent(2) - textExtent(4))
+        end
+
         function testConversionFactorUpdatesLineLength(testCase)
             hScalebar = testCase.createScalebar("x", 2, "mm");
             hLine = findobj(testCase.Axes, 'Tag', 'Scalebar Line');
@@ -349,7 +473,8 @@ classdef ScalebarTest < matlab.unittest.TestCase
 
         function testSaveCurrentStyleContextMenuCallback(testCase)
             preferenceNames = {'FontSize', 'FontWeight', 'LineWidth', ...
-                'Color', 'Location', 'FontName'};
+                'Color', 'Location', 'FontName', 'ShowBackground', ...
+                'BackgroundColor', 'BackgroundAlpha', 'BackgroundPadding'};
             [hadPreference, preferenceValues] = ...
                 testCase.captureStylePreferences(preferenceNames);
             testCase.addTeardown(@() testCase.restoreStylePreferences( ...

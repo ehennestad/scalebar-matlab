@@ -38,5 +38,28 @@ classdef ExampleTest < matlab.unittest.TestCase
             testCase.verifyTrue(isgraphics(hFigure))
             testCase.verifyNumElements(hScalebarLines, 1)
         end
+
+        function testBackgroundExampleCreatesScalebarBackground(testCase)
+            repositoryRoot = fileparts(fileparts(mfilename("fullpath")));
+            addpath(fullfile(repositoryRoot, "src", "examples"))
+
+            hFigure = createBackgroundExample("off");
+            testCase.addTeardown(@() close(hFigure))
+
+            hBackground = findobj(hFigure, "Tag", "Scalebar Background");
+            hScalebarLine = findobj(hFigure, "Tag", "Scalebar Line");
+            hScalebarText = findobj(hFigure, "Tag", "Scalebar Text");
+            hImage = findobj(hFigure, "Type", "image");
+            hChildren = hBackground.Parent.Children;
+
+            testCase.verifyNumElements(hBackground, 1)
+            testCase.verifyEqual(hBackground.FaceAlpha, 0.68)
+            testCase.verifyLessThan(find(hChildren == hBackground), ...
+                find(hChildren == hImage))
+            testCase.verifyGreaterThan(find(hChildren == hBackground), ...
+                find(hChildren == hScalebarLine))
+            testCase.verifyGreaterThan(find(hChildren == hBackground), ...
+                find(hChildren == hScalebarText))
+        end
     end
 end

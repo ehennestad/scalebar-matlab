@@ -40,6 +40,22 @@ createPlotExample
 
 ![Membrane-potential trace with 500 ms and 50 mV scale bars](docs/images/scalebar-plot-example.png)
 
+### Semi-transparent background
+
+The [complete background example](src/examples/createBackgroundExample.m) places
+a scale bar over a visually busy simulated fluorescence image and enables a
+semi-transparent background to keep the scale bar readable. From the repository
+root, run it with:
+
+```matlab
+addpath("src/examples")
+createBackgroundExample
+```
+
+<p align="center">
+  <img src="docs/images/scalebar-background-example.png" width="500" alt="Simulated fluorescence image with a scale bar on a semi-transparent background">
+</p>
+
 ## Requirements
 
 MATLAB R2019b or later.
@@ -104,9 +120,10 @@ hScalebar.Location = "northwest";
 | `FontName`, `FontSize`, `FontWeight` | Text appearance. |
 | `Margin`, `TextSpacing` | Pixel offsets from the axes corner and scale bar. |
 | `AutoAdjustScalebarLength`, `AutoScalebarLength` | Automatically select a scale-bar length as a percentage of the relevant axes range. |
+| `ShowBackground`, `BackgroundColor`, `BackgroundAlpha`, `BackgroundPadding` | Semi-transparent background behind the scale bar. |
 | `Visible` | Show or hide the scale bar using `'on'` or `'off'`. |
 
-Right-click a scale bar to change its color, line width, font, location, and automatic-length setting interactively.
+Right-click a scale bar to change its color, line width, font, location, background, and automatic-length setting interactively.
 
 ## Contributing
 
